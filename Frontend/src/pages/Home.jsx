@@ -6,6 +6,7 @@ const Home = () => {
       <h1 className="text-4xl font-bold">Welcome to the Home Page</h1>
       <p>This is the homepage of your website!</p>
       <h1 className='text-2xl'>Hlooooooooooooooooooooooooooo</h1>
+      <p>dhdjd</p>
     </div>
   );
 }
