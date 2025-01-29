@@ -2,12 +2,64 @@ import React from 'react';
 
 const Gallery = () => {
   return (
-    <div className="p-6">
-      <h1 className="text-4xl font-bold">Gallery</h1>
-      <p>Check out some awesome pictures here!</p>
-      {/* Add your gallery content or images here */}
-    </div>
-  );
-}
+    <>
+     <img 
+        className="w-full h-auto max-h-[500px] object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
+        src="../public/p6.png" 
+        alt="gallery"
+      />
+    
+  <br />
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid gap-4">
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-1.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-2.jpg" alt=""/>
+          </div>
+      </div>
+      <div class="grid gap-4">
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-3.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-4.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-5.jpg" alt=""/>
+          </div>
+      </div>
+      <div class="grid gap-4">
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-6.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-7.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-8.jpg" alt=""/>
+          </div>
+      </div>
+      <div class="grid gap-4">
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-9.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-10.jpg" alt=""/>
+          </div>
+          <div>
+              <img class="h-auto max-w-full rounded-lg" src="https://flowbite.s3.amazonaws.com/docs/gallery/masonry/image-11.jpg" alt=""/>
+          </div>
+      </div>
+  </div><br />
+
+      
+      </>
+    );
+  };
 
 export default Gallery;

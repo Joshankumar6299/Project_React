@@ -4,6 +4,7 @@ import About from "../pages/About"
 import Contact from "../pages/Contact"
 import Gallery from "../pages/Gallery"
 import Navbar from '../components/Navbar'
+import Footer from "../components/Footer"
 
 
 const AppRoutes = () => {
@@ -16,6 +17,7 @@ const AppRoutes = () => {
                 <Route path="/contact" element={<Contact />}></Route>
                 <Route path="/gallery" element={<Gallery />}></Route>
             </Routes>
+            <Footer/>
             
         </>
 
