@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom'; // For navigation
-import About from '../pages/About';
+// import About from '../pages/About';
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
@@ -57,7 +57,7 @@ const Navbar = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
             <h2 className="text-xl font-semibold">Welcome to the Pop-Up Page</h2>
-            <p><About/></p>
+            <p></p>
             <button onClick={closeModal} className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg">Close</button>
           </div>
         </div>
