@@ -1,12 +1,9 @@
-import { useState } from "react";
+
 import { FaFacebook } from "react-icons/fa";
 import { AiFillGoogleCircle } from "react-icons/ai";
 import { FaLinkedin } from "react-icons/fa";
 
 export default function LoginPage() {
-  const [isOpen, setIsOpen] = useState(true);
-
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
