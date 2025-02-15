@@ -9,6 +9,8 @@ const Home = () => {
     <>
     <Carousel/>
     <br />
+
+    <h1 className='text-9xl text-red-900'>Rohit</h1>
     <div className="flex flex-col items-center text-center p-6 bg-white shadow-lg rounded-lg">
   <h2 className="text-orange-600 text-xl font-bold mb-2">
     CREATING IMPACT SINCE 2025
