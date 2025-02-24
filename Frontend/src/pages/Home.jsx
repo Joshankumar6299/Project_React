@@ -57,6 +57,7 @@ const Home = () => {
         <div className="p-6 w-full md:w-1/2 flex flex-col text-left h-full">
           <h2 className="text-2xl font-bold text-gray-900 text-center">Donate Food</h2>
           <p className="text-gray-700 mt-2">
+            
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque vel quos magnam doloremque quas. Distinctio error a culpa repellat, officiis autem dignissimos, id quisquam, atque reiciendis eveniet voluptatum inventore praesentium tempora eaque optio molestias commodi modi tenetur labore quasi nihil? Fuga nisi facere excepturi maiores repellat consequatur sapiente est asperiores non, quisquam ex molestias fugiat omnis eaque porro fugit commodi temporibus necessitatibus similique hic, officia quibusdam quaerat minus natus. Reprehenderit est facere necessitatibus deleniti, magni accusamus amet. Fugiat libero nam accusantium harum mollitia iste molestiae porro voluptate magni ullam. Aspernatur vero ipsum in eos fuga eveniet nobis earum vitae atque.
           </p>
           <button 
