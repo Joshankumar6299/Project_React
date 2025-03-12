@@ -6,13 +6,13 @@ export default function Footer() {
     <>
 
 
-      <footer className="bg-white dark:bg-gray-900">
+      <footer className="bg-white dark:bg-green-300">
         <div className="mx-auto w-full max-w-screen-xl p-4 py-6 lg:py-8">
           <div className="md:flex md:justify-between">
             <div className="mb-6 md:mb-0">
-              <a href="https://flowbite.com/" className="flex items-center">
-                <img src="https://flowbite.com/docs/images/logo.svg" className="h-8 me-3" alt="FlowBite Logo" />
-                <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white">Flowbite</span>
+              <a href="Home.jsx" className="flex items-center">
+                <img src="../public/logo.png" className="h-30" alt="FlowBite Logo" />
+                <span className="self-center text-2xl font-semibold whitespace-nowrap dark:text-white"></span>
               </a>
             </div>
             <div className="grid grid-cols-2 gap-8 sm:gap-6 sm:grid-cols-3">
