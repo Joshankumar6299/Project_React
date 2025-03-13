@@ -81,11 +81,11 @@ const Carousel = () => {
       </div>
 
       {/* Donate Now Button */}
-      <div className="absolute w-full h-[500px] bg-cover bg-center">
+      <div className="absolute  w-full h-[500px] bg-cover bg-center">
         <button
           onClick={() => navigate("/donate")} // Navigate to Donate page
-          className="absolute bottom-[400px] left-10 bg-[#062B40] text-white px-6 py-4 
-                     text-lg flex items-center rounded-lg no-underline z-10"
+          className="absolute bottom-[550px] left-10 bg-[#062B40] text-white px-6 py-4 
+                     text-lg flex items-center rounded-lg no-underline z-99"
         >
           Donate Now
           <span className="ml-2 bg-orange-500 px-3 py-2 rounded-full">→</span>
