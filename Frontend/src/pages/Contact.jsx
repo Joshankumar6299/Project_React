@@ -36,38 +36,38 @@
         
 
           <div className="relative z-0 w-full mb-5 group">
-            <input type="email" id="floating_email" className="block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+            <input type="email" id="floating_email" className=" outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
             <label htmlFor="floating_email" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email address</label>
           </div>
 
           <div className="relative z-0 w-full mb-5 group">
-            <input type="password" id="floating_password" className="block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+            <input type="password" id="floating_password" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
             <label htmlFor="floating_password" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Password</label>
           </div>
 
           <div className="relative z-0 w-full mb-5 group">
-            <input type="password" id="floating_repeat_password" className="block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+            <input type="password" id="floating_repeat_password" className=" outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
             <label htmlFor="floating_repeat_password" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Confirm password</label>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="relative z-0 w-full mb-5 group">
-              <input type="text" id="floating_first_name" className="block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+              <input type="text" id="floating_first_name" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
               <label htmlFor="floating_first_name" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">First name</label>
             </div>
             <div className="relative z-0 w-full mb-5 group">
-              <input type="text" id="floating_last_name" className="block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+              <input type="text" id="floating_last_name" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
               <label htmlFor="floating_last_name" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Last name</label>
             </div>
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
             <div className="relative z-0 w-full mb-5 group">
-              <input type="tel" id="floating_phone" className="block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+              <input type="tel" id="floating_phone" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
               <label htmlFor="floating_phone" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Phone number</label>
             </div>
             <div className="relative z-0 w-full mb-5 group">
-              <input type="text" id="floating_company" className="block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+              <input type="text" id="floating_company" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
               <label htmlFor="floating_company" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Company</label>
             </div>
           </div>
