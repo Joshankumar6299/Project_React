@@ -34,22 +34,10 @@
         {/* Right Side - Form */}
         <form className="max-w-md w-full bg-white dark:bg-gray-900 p-6 rounded-lg shadow-md mb-30 text-white">
         
-
           <div className="relative z-0 w-full mb-5 group">
             <input type="email" id="floating_email" className=" outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
             <label htmlFor="floating_email" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Email address</label>
           </div>
-
-          <div className="relative z-0 w-full mb-5 group">
-            <input type="password" id="floating_password" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
-            <label htmlFor="floating_password" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Password</label>
-          </div>
-
-          <div className="relative z-0 w-full mb-5 group">
-            <input type="password" id="floating_repeat_password" className=" outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
-            <label htmlFor="floating_repeat_password" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Confirm password</label>
-          </div>
-
           <div className="grid md:grid-cols-2 gap-6">
             <div className="relative z-0 w-full mb-5 group">
               <input type="text" id="floating_first_name" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
@@ -70,6 +58,13 @@
               <input type="text" id="floating_company" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
               <label htmlFor="floating_company" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Company</label>
             </div>
+
+
+            <div className="relative z-0 w-full mb-5 group">
+              <textarea type="text" id="floating_company" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+              <label htmlFor="floating_company" className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Tell me anout your query</label>
+            </div>
+
           </div>
 
           <button type="submit" className="w-full px-5 py-2.5 text-sm font-medium text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none">
@@ -81,7 +76,8 @@
     </div>
     {/* </div> */}
 
-    
+      
+
     </>
     );
   }
