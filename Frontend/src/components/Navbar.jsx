@@ -1,27 +1,21 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import LoginPage from '../pages/Login';
 import logo from '../assets/img/logo2.png';
 
 const Navbar = () => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-
-  const openModal = () => {
-    setIsModalOpen(true);
-    navigate('/login');
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-  };
 
   // NavLink active class styling
   const navLinkClass = ({ isActive }) => {
     return `text-gray-700 hover:text-orange-600 transition-colors duration-300 font-medium ${
       isActive ? 'text-orange-600 border-b-2 border-orange-600' : ''
     }`;
+  };
+
+  // Handle the 'Get Started' button click (navigate to login page)
+  const handleGetStarted = () => {
+    navigate('/login'); // Navigate directly to the login page
   };
 
   return (
@@ -53,7 +47,7 @@ const Navbar = () => {
                 Contact
               </NavLink>
               <button
-                onClick={openModal}
+                onClick={handleGetStarted} // Navigate to the login page
                 className="bg-orange-600 text-white px-6 py-2 rounded-full hover:bg-orange-700 transition-colors duration-300 font-medium"
               >
                 Get Started
@@ -154,8 +148,8 @@ const Navbar = () => {
               </NavLink>
               <button
                 onClick={() => {
-                  openModal();
-                  setIsMenuOpen(false);
+                  handleGetStarted(); // Navigate to the login page
+                  setIsMenuOpen(false); // Close the mobile menu
                 }}
                 className="w-full text-center bg-orange-600 text-white px-4 py-2 rounded-full hover:bg-orange-700 transition-colors duration-300 font-medium mt-2"
               >
@@ -165,21 +159,6 @@ const Navbar = () => {
           </div>
         )}
       </nav>
-
-      {/* Centered Modal Popup */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
-            <h2 className="text-xl font-semibold mb-4">LoginPage</h2>
-            <LoginPage /> {/* Show Login Component inside modal */}
-            <button 
-              onClick={closeModal} 
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg">
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </>
   );
 };
