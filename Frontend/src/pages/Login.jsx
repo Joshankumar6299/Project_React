@@ -1,63 +1,75 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { FaFacebook, FaTwitter } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
+    email: "",
     password: "",
   });
-  const [rememberMe, setRememberMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState({
+    email: "",
+    password: "",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
+    }));
+    setErrorMessage((prev) => ({
+      ...prev,
+      [name]: "", // Clear error message for the field being edited
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    let errors = {};
+
+    if (!formData.email) {
+      errors.email = "Please fill the email";
+    }
+    if (!formData.password) {
+      errors.password = "Please fill the password";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setErrorMessage(errors);
+      return;
+    }
+
+    setErrorMessage({ email: "", password: "" });
     console.log("Login attempt with:", formData);
   };
 
   const handleSignUp = () => {
-    navigate('/register');
+    navigate("/register");
   };
 
   return (
-    <div className="h-140 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-        <div className="p-8">
-          {/* Social Icons */}
-          <div className="flex justify-end space-x-2 mb-6">
-            <a href="#" className="text-gray-400 hover:text-gray-600">
-              <FaFacebook className="w-5 h-5" />
-            </a>
-            <a href="#" className="text-gray-400 hover:text-gray-600">
-              <FaTwitter className="w-5 h-5" />
-            </a>
-          </div>
-
-          {/* Sign In Header */}
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Sign In</h2>
-
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg flex">
+        {/* Sign In Section */}
+        <div className="w-1/2 p-8 flex flex-col justify-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Sign In</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <input
-                type="text"
-                name="username"
-                value={formData.username}
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
-                placeholder="Username"
-                className="w-full px-3 py-2 border-b-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-700"
-                required
+                placeholder="Email"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errorMessage.email ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"
+                }`}
               />
+              {errorMessage.email && (
+                <p className="text-red-500 text-sm mt-1">{errorMessage.email}</p>
+              )}
             </div>
-
             <div>
               <input
                 type="password"
@@ -65,46 +77,36 @@ export default function LoginPage() {
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Password"
-                className="w-full px-3 py-2 border-b-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-700"
-                required
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errorMessage.password ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"
+                }`}
               />
+              {errorMessage.password && (
+                <p className="text-red-500 text-sm mt-1">{errorMessage.password}</p>
+              )}
             </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="remember"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 text-emerald-500 border-gray-300 rounded focus:ring-emerald-500"
-                />
-                <label htmlFor="remember" className="ml-2 text-gray-600">
-                  Remember Me
-                </label>
-              </div>
-              <a href="#" className="text-gray-600 hover:text-gray-800">
-                Forgot Password
-              </a>
+            <div className="flex justify-between items-center text-sm">
+              <a href="#" className="text-blue-600 hover:underline">Forgot Password?</a>
             </div>
-
             <button
               type="submit"
-              className="w-full bg-emerald-500 text-white py-2 rounded-md hover:bg-emerald-600 transition-colors"
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
             >
-              Sign In
+              SIGN IN
             </button>
-
-            <div className="text-center text-sm text-gray-600">
-              Not a member? {" "}
-              <button
-                onClick={handleSignUp}
-                className="text-emerald-500 hover:text-emerald-600 font-medium focus:outline-none"
-              >
-                Sign Up
-              </button>
-            </div>
           </form>
+        </div>
+
+        {/* Sign Up Section */}
+        <div className="w-1/2 bg-red-500 text-white p-8 flex flex-col justify-center items-center">
+          <h2 className="text-3xl font-bold mb-4">Hello, Friend!</h2>
+          <p className="text-center mb-6">Sign up and start your journey with us.</p>
+          <button
+            onClick={handleSignUp}
+            className="bg-white text-red-500 px-6 py-2 rounded-md hover:bg-gray-200 transition-colors"
+          >
+            SIGN UP
+          </button>
         </div>
       </div>
     </div>
