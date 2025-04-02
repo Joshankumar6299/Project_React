@@ -1,70 +1,19 @@
-import React, { useState } from 'react'
-import Carousel from '../components/Carousel'
-import p1 from '../assets/img/p1.jpg';
-
+import React, { useState } from 'react';
+import Carousel from '../components/Carousel';
+import p1 from '../assets/img/p1.jpg';  // Correct image import path
+import main from '../assets/img/main.png';
 const Home = () => {
   const [isOpen, setIsOpen] = useState(false);
+
   return (
-<<<<<<< HEAD
-    
     <>
-    <Carousel/>
-    <br />
-
-    
-    <div className="flex flex-col items-center text-center p-6 bg-white shadow-lg rounded-lg">
-  <h2 className="text-orange-600 text-xl font-bold mb-2">
-    CREATING IMPACT SINCE 2025
-  </h2>
-  <p className="text-gray-700 max-w-xl mb-6">
-    For over 20 years, Jeevan Asha has been working for the upliftment of the
-    underserved communities through Education and Health
-  </p>
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
-    <div className="flex flex-col items-center">
-      <span className="text-black text-2xl font-bold">4822</span>
-      <span className="text-gray-600">Underprivileged Children Educated</span>
-    </div>
-    <div className="flex flex-col items-center">
-      <span className="text-black text-2xl font-bold">2491</span>
-      <span className="text-gray-600">Long Term Impact and Care</span>
-    </div>
-    <div className="flex flex-col items-center">
-      <span className="text-black text-2xl font-bold">40000+</span>
-      <span className="text-gray-600">Reach (Consultation, Camps, Awareness)</span>
-    </div>
-  </div>
-</div>
-
-{/* OUR VISION */} <br />
-    <div className="bg-orange-500 text-white text-center py-10 px-6 h-70 flex flex-col justify-center items-center">
-    <div className="bg-white text-orange-600 font-bold text-2xl px-6 py-3 rounded-lg inline-block shadow-md"> OUR VISION</div>
-    <p className="text-lg font-semibold mt-6 max-w-3xl mx-auto leading-relaxed">
-        TO BRING HOPE TO MANY LIVES AS WE SERVE DIFFERENT COMMUNITIES
-        THROUGH VARIOUS PROJECTS IN THANE AND BEYOND
-    </p>
-    </div>
-
-    
-
-{/* card  */} <br />
-<div>
-      {/* Card Layout */}
-      <div className="flex flex-col md:flex-row bg-white shadow-md rounded-lg overflow-hidden border h-96">
-        {/* Left: Single Image */}
-        <div className="w-full md:w-1/2 h-full">
-          <img src="../public/p1.jpg" alt="Food Donation" className="w-full h-full object-cover" />
-        </div>
-
-        {/* Right: Content Section */}
-        <div className="p-6 w-full md:w-1/2 flex flex-col text-left h-full">
-          <h2 className="text-2xl font-bold text-gray-900 text-center">Donate Food</h2>
-          <p className="text-gray-700 mt-2">
+      <img 
+            className="w-full h-110 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
+            src={main}  // Use imported variable here
+            alt="About Us"
+            />
             
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque vel quos magnam doloremque quas. Distinctio error a culpa repellat, officiis autem dignissimos, id quisquam, atque reiciendis eveniet voluptatum inventore praesentium tempora eaque optio molestias commodi modi tenetur labore quasi nihil? Fuga nisi facere excepturi maiores repellat consequatur sapiente est asperiores non, quisquam ex molestias fugiat omnis eaque porro fugit commodi temporibus necessitatibus similique hic, officia quibusdam quaerat minus natus. Reprehenderit est facere necessitatibus deleniti, magni accusamus amet. Fugiat libero nam accusantium harum mollitia iste molestiae porro voluptate magni ullam. Aspernatur vero ipsum in eos fuga eveniet nobis earum vitae atque.
-=======
-    <div className="min-h-screen bg-gray-50">
-      <Carousel />
+      <br />
       
       {/* Impact Section */}
       <div className="container mx-auto px-4 py-12">
@@ -75,7 +24,6 @@ const Home = () => {
           <p className="text-gray-700 max-w-2xl mb-8 text-lg">
             For over 20 years, Jeevan Asha has been working for the upliftment of the
             underserved communities through Education and Health
->>>>>>> 94172e4862bad45345d8150f638ea5cbaa19a05e
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
             <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
@@ -150,8 +98,8 @@ const Home = () => {
           </div>
         </div>
       )}
-    </div>
-  )
-}
+    </>
+  );
+};
 
-export default Home
+export default Home;
