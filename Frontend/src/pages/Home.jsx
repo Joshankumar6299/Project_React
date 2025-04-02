@@ -1,12 +1,19 @@
-import React, { useState } from 'react'
-import Carousel from '../components/Carousel'
-import p1 from '../assets/img/p1.jpg';
-
+import React, { useState } from 'react';
+import Carousel from '../components/Carousel';
+import p1 from '../assets/img/p1.jpg';  // Correct image import path
+import main from '../assets/img/main.png';
 const Home = () => {
   const [isOpen, setIsOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Carousel />
+    <>
+      <img 
+            className="w-full h-110 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
+            src={main}  // Use imported variable here
+            alt="About Us"
+            />
+            
+      <br />
       
       {/* Impact Section */}
       <div className="container mx-auto px-4 py-12">
@@ -91,8 +98,8 @@ const Home = () => {
           </div>
         </div>
       )}
-    </div>
-  )
-}
+    </>
+  );
+};
 
-export default Home
+export default Home;

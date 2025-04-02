@@ -1,11 +1,15 @@
 import React from 'react';
+import img from '../assets/img/img.png';
 
 const Service = () => {
   return (
     <>
 
-     <img  className="w-full h-auto max-h-[500px] object-cover transition-all duration-300 rounded-lg cursor-pointer filter gray hover:grayscale-0"  src="../public/img.png"  alt="About Us"/>
-
+<img 
+  className="w-full h-auto object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
+  src={img}  // Use imported variable here
+  alt="About Us"
+/>
 
  
     <div className="flex justify-center items-center h-110 bg-gray-100">

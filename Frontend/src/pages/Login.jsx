@@ -1,79 +1,114 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import { FaFacebook } from "react-icons/fa";
-import { AiFillGoogleCircle } from "react-icons/ai";
-import { FaLinkedin } from "react-icons/fa";
-import RegisterPage from "../pages/Register"; // Import Register Page
+import { useNavigate } from "react-router-dom";
 
 export default function LoginPage() {
-  const navigate = useNavigate(); // Hook for navigation
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [errorMessage, setErrorMessage] = useState({
+    email: "",
+    password: "",
+  });
 
-  const openModal = () => {
-    setIsModalOpen(true);
-    navigate("/register"); // Redirect to register page
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    setErrorMessage((prev) => ({
+      ...prev,
+      [name]: "", // Clear error message for the field being edited
+    }));
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    let errors = {};
+
+    if (!formData.email) {
+      errors.email = "Please fill the email";
+    }
+    if (!formData.password) {
+      errors.password = "Please fill the password";
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setErrorMessage(errors);
+      return;
+    }
+
+    setErrorMessage({ email: "", password: "" });
+    console.log("Login attempt with:", formData);
+  };
+
+  const handleSignUp = () => {
+    navigate("/register");
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-      <div className="flex w-3/4 max-w-4xl">
-        {/* Left Side - Login Form */}
-        <div className="w-1/2 flex flex-col items-center justify-center bg-white p-10 shadow-lg">
-          <h2 className="text-4xl font-bold mb-4">Sign in</h2>
-
-          {/* Social Icons */}
-          <div className="flex space-x-4 mb-4">
-            <button className="p-2 bg-gray-200 rounded-full"><FaFacebook /></button>
-            <button className="p-2 bg-gray-200 rounded-full"><AiFillGoogleCircle /></button>
-            <button className="p-2 bg-gray-200 rounded-full"><FaLinkedin /></button>
-          </div>
-
-          <p className="text-gray-500 mb-4">Or With Your Account</p>
-
-          {/* Input Fields */}
-          <input type="email" placeholder="Email" className="w-80 p-2 mb-3 border rounded" />
-          <input type="password" placeholder="Password" className="w-80 p-2 mb-3 border rounded" />
-
-          <a href="#" className="text-blue-600 mb-3">Forgot Password</a>
-
-          {/* Sign In Button - Opens Modal & Redirects */}
-          <button 
-            onClick={openModal} 
-            className="bg-orange-500 text-white px-6 py-2 rounded mt-3">
-            SIGN IN
-          </button>
+    <div className="h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg flex">
+        {/* Sign In Section */}
+        <div className="w-1/2 p-8 flex flex-col justify-center">
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">Sign In</h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="Email"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errorMessage.email ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"
+                }`}
+              />
+              {errorMessage.email && (
+                <p className="text-red-500 text-sm mt-1">{errorMessage.email}</p>
+              )}
+            </div>
+            <div>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                  errorMessage.password ? "border-red-500 focus:ring-red-500" : "focus:ring-blue-500"
+                }`}
+              />
+              {errorMessage.password && (
+                <p className="text-red-500 text-sm mt-1">{errorMessage.password}</p>
+              )}
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <a href="#" className="text-blue-600 hover:underline">Forgot Password?</a>
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600 transition-colors"
+            >
+              SIGN IN
+            </button>
+          </form>
         </div>
 
-        {/* Right Side - Signup Section */}
-        <div className="w-1/2 flex flex-col items-center justify-center bg-red-400 text-white p-10">
-          <h2 className="text-3xl font-bold mb-3">Hello, Friend!</h2>
-          <p className="text-center mb-4 px-6">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
-          <button 
-            onClick={() => navigate("/RegisterPage")} 
-            className="border border-white px-6 py-2 rounded">
+        {/* Sign Up Section */}
+        <div className="w-1/2 bg-red-500 text-white p-8 flex flex-col justify-center items-center">
+          <h2 className="text-3xl font-bold mb-4">Hello, Friend!</h2>
+          <p className="text-center mb-6">Sign up and start your journey with us.</p>
+          <button
+            onClick={handleSignUp}
+            className="bg-white text-red-500 px-6 py-2 rounded-md hover:bg-gray-200 transition-colors"
+          >
             SIGN UP
           </button>
         </div>
       </div>
-
-      {/* Modal Popup for Sign In */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
-            <h2 className="text-xl font-semibold mb-4">RegisterPage</h2>
-            <RegisterPage /> {/* Show Register Component inside modal */}
-            <button 
-              onClick={closeModal} 
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg">
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
