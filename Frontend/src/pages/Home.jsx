@@ -1,10 +1,11 @@
-import React,{useState} from 'react'
+import React, { useState } from 'react'
 import Carousel from '../components/Carousel'
-
+import p1 from '../assets/img/p1.jpg';
 
 const Home = () => {
-    const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   return (
+<<<<<<< HEAD
     
     <>
     <Carousel/>
@@ -61,29 +62,88 @@ const Home = () => {
           <p className="text-gray-700 mt-2">
             
             Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque vel quos magnam doloremque quas. Distinctio error a culpa repellat, officiis autem dignissimos, id quisquam, atque reiciendis eveniet voluptatum inventore praesentium tempora eaque optio molestias commodi modi tenetur labore quasi nihil? Fuga nisi facere excepturi maiores repellat consequatur sapiente est asperiores non, quisquam ex molestias fugiat omnis eaque porro fugit commodi temporibus necessitatibus similique hic, officia quibusdam quaerat minus natus. Reprehenderit est facere necessitatibus deleniti, magni accusamus amet. Fugiat libero nam accusantium harum mollitia iste molestiae porro voluptate magni ullam. Aspernatur vero ipsum in eos fuga eveniet nobis earum vitae atque.
+=======
+    <div className="min-h-screen bg-gray-50">
+      <Carousel />
+      
+      {/* Impact Section */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex flex-col items-center text-center p-8 bg-white shadow-xl rounded-2xl transform hover:scale-105 transition-transform duration-300">
+          <h2 className="text-3xl md:text-4xl font-bold text-orange-600 mb-4">
+            CREATING IMPACT SINCE 2025
+          </h2>
+          <p className="text-gray-700 max-w-2xl mb-8 text-lg">
+            For over 20 years, Jeevan Asha has been working for the upliftment of the
+            underserved communities through Education and Health
+>>>>>>> 94172e4862bad45345d8150f638ea5cbaa19a05e
           </p>
-          <button 
-            onClick={() => setIsOpen(true)} 
-            className="mt-4 border border-black px-3 py-2 rounded-full text-black hover:bg-gray-200 transition w-32"
-          >
-            Read More
-          </button>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+              <span className="text-4xl font-bold text-orange-600 block mb-2">4822</span>
+              <span className="text-gray-700">Underprivileged Children Educated</span>
+            </div>
+            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+              <span className="text-4xl font-bold text-orange-600 block mb-2">2491</span>
+              <span className="text-gray-700">Long Term Impact and Care</span>
+            </div>
+            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+              <span className="text-4xl font-bold text-orange-600 block mb-2">40000+</span>
+              <span className="text-gray-700">Reach (Consultation, Camps, Awareness)</span>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Popup Modal */}
+      {/* Vision Section */}
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-16 px-4">
+        <div className="container mx-auto text-center">
+          <div className="bg-white text-orange-600 font-bold text-2xl px-8 py-4 rounded-full inline-block shadow-lg mb-8">
+            OUR VISION
+          </div>
+          <p className="text-xl md:text-2xl font-semibold max-w-3xl mx-auto leading-relaxed">
+            TO BRING HOPE TO MANY LIVES AS WE SERVE DIFFERENT COMMUNITIES
+            THROUGH VARIOUS PROJECTS IN THANE AND BEYOND
+          </p>
+        </div>
+      </div>
+
+      {/* Donate Food Section */}
+      <div className="container mx-auto px-4 py-12">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition-transform duration-300">
+          <div className="flex flex-col md:flex-row">
+            <div className="w-full md:w-1/2 h-64 md:h-auto">
+              <img src={p1} alt="Food Donation" className="w-full h-full object-cover" />
+            </div>
+            <div className="p-8 w-full md:w-1/2 flex flex-col justify-between">
+              <div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">Donate Food</h2>
+                <p className="text-gray-700 leading-relaxed">
+                  Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque vel quos magnam doloremque quas. Distinctio error a culpa repellat, officiis autem dignissimos, id quisquam, atque reiciendis eveniet voluptatum inventore praesentium tempora eaque optio molestias commodi modi tenetur labore quasi nihil?
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsOpen(true)} 
+                className="mt-6 bg-orange-600 text-white px-6 py-3 rounded-full hover:bg-orange-700 transition-colors duration-300 w-full md:w-auto"
+              >
+                Read More
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal */}
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold text-gray-900">Donate Food Details</h2>
-            <p className="text-gray-700 mt-2">
+          <div className="bg-white p-8 rounded-2xl shadow-2xl w-11/12 max-w-lg mx-4">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Donate Food Details</h2>
+            <p className="text-gray-700 leading-relaxed mb-6">
               This project focuses on helping underprivileged communities by providing food donations.
               Join us to make a difference in people's lives.
-              Lorem ipsum dolor sit amet, consectetur adipisicing elit. Odit quam, quis praesentium qui hic amet consequuntur excepturi nulla obcaecati. Similique incidunt architecto harum nemo alias, dolorum, quaerat voluptas, esse labore deserunt culpa veritatis? Magni voluptas a perferendis distinctio sint fugiat, inventore delectus ab natus consequuntur officiis quis labore illum nesciunt.
             </p>
             <button 
               onClick={() => setIsOpen(false)} 
-              className="mt-4 border border-black px-4 py-2 rounded-md text-black hover:bg-gray-200 transition"
+              className="w-full bg-orange-600 text-white px-6 py-3 rounded-full hover:bg-orange-700 transition-colors duration-300"
             >
               Close
             </button>
@@ -91,10 +151,6 @@ const Home = () => {
         </div>
       )}
     </div>
-
-<br />
-
-    </>
   )
 }
 
