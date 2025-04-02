@@ -1,13 +1,14 @@
 import React from 'react';
-
+import p6 from '../assets/img/p6.png';
 const Gallery = () => {
   return (
     <>
      <img 
-        className="w-full h-auto max-h-[500px] object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
-        src="../public/p6.png" 
-        alt="gallery"
-      />
+          className="w-full h-auto object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
+          src={p6}  // Use imported variable here
+          alt="About Us"
+          />
+    
     
   <br />
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
