@@ -1,79 +1,112 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
-import { FaFacebook } from "react-icons/fa";
-import { AiFillGoogleCircle } from "react-icons/ai";
-import { FaLinkedin } from "react-icons/fa";
-import RegisterPage from "../pages/Register"; // Import Register Page
+import { useNavigate, Link } from "react-router-dom";
+import { FaFacebook, FaTwitter } from "react-icons/fa";
 
 export default function LoginPage() {
-  const navigate = useNavigate(); // Hook for navigation
-  const [isModalOpen, setIsModalOpen] = useState(false); // State for modal
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    username: "",
+    password: "",
+  });
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const openModal = () => {
-    setIsModalOpen(true);
-    navigate("/register"); // Redirect to register page
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    console.log("Login attempt with:", formData);
+  };
+
+  const handleSignUp = () => {
+    navigate('/register');
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-      <div className="flex w-3/4 max-w-4xl">
-        {/* Left Side - Login Form */}
-        <div className="w-1/2 flex flex-col items-center justify-center bg-white p-10 shadow-lg">
-          <h2 className="text-4xl font-bold mb-4">Sign in</h2>
-
+    <div className="h-140 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+        <div className="p-8">
           {/* Social Icons */}
-          <div className="flex space-x-4 mb-4">
-            <button className="p-2 bg-gray-200 rounded-full"><FaFacebook /></button>
-            <button className="p-2 bg-gray-200 rounded-full"><AiFillGoogleCircle /></button>
-            <button className="p-2 bg-gray-200 rounded-full"><FaLinkedin /></button>
+          <div className="flex justify-end space-x-2 mb-6">
+            <a href="#" className="text-gray-400 hover:text-gray-600">
+              <FaFacebook className="w-5 h-5" />
+            </a>
+            <a href="#" className="text-gray-400 hover:text-gray-600">
+              <FaTwitter className="w-5 h-5" />
+            </a>
           </div>
 
-          <p className="text-gray-500 mb-4">Or With Your Account</p>
+          {/* Sign In Header */}
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">Sign In</h2>
 
-          {/* Input Fields */}
-          <input type="email" placeholder="Email" className="w-80 p-2 mb-3 border rounded" />
-          <input type="password" placeholder="Password" className="w-80 p-2 mb-3 border rounded" />
+          {/* Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                placeholder="Username"
+                className="w-full px-3 py-2 border-b-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-700"
+                required
+              />
+            </div>
 
-          <a href="#" className="text-blue-600 mb-3">Forgot Password</a>
+            <div>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                className="w-full px-3 py-2 border-b-2 border-gray-200 focus:border-emerald-500 outline-none text-gray-700"
+                required
+              />
+            </div>
 
-          {/* Sign In Button - Opens Modal & Redirects */}
-          <button 
-            onClick={openModal} 
-            className="bg-orange-500 text-white px-6 py-2 rounded mt-3">
-            SIGN IN
-          </button>
-        </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="remember"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-emerald-500 border-gray-300 rounded focus:ring-emerald-500"
+                />
+                <label htmlFor="remember" className="ml-2 text-gray-600">
+                  Remember Me
+                </label>
+              </div>
+              <a href="#" className="text-gray-600 hover:text-gray-800">
+                Forgot Password
+              </a>
+            </div>
 
-        {/* Right Side - Signup Section */}
-        <div className="w-1/2 flex flex-col items-center justify-center bg-red-400 text-white p-10">
-          <h2 className="text-3xl font-bold mb-3">Hello, Friend!</h2>
-          <p className="text-center mb-4 px-6">Lorem Ipsum is simply dummy text of the printing and typesetting industry.</p>
-          <button 
-            onClick={() => navigate("/RegisterPage")} 
-            className="border border-white px-6 py-2 rounded">
-            SIGN UP
-          </button>
+            <button
+              type="submit"
+              className="w-full bg-emerald-500 text-white py-2 rounded-md hover:bg-emerald-600 transition-colors"
+            >
+              Sign In
+            </button>
+
+            <div className="text-center text-sm text-gray-600">
+              Not a member? {" "}
+              <button
+                onClick={handleSignUp}
+                className="text-emerald-500 hover:text-emerald-600 font-medium focus:outline-none"
+              >
+                Sign Up
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-
-      {/* Modal Popup for Sign In */}
-      {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md text-center">
-            <h2 className="text-xl font-semibold mb-4">RegisterPage</h2>
-            <RegisterPage /> {/* Show Register Component inside modal */}
-            <button 
-              onClick={closeModal} 
-              className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg">
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
