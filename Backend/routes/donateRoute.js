@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-router.post('/register', (req, res) => {
-    res.send('register');
+router.post('/donate', (req, res) => {
+    res.send('donate');
 });
 
 module.exports = router;
