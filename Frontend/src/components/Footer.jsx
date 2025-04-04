@@ -62,8 +62,8 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
             <ul className="space-y-2 text-gray-400">
               <li>123 Charity Street</li>
-              <li>Thane, Maharashtra</li>
-              <li>Phone: +91 1234567890</li>
+              <li>Rajkot , Gujarat</li>
+              <li>Phone: +91 6299448945</li>
               <li>Email: info@jeevanasha.org</li>
             </ul>
           </div>
