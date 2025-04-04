@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import Carousel from '../components/Carousel';
 import p1 from '../assets/img/p1.jpg';  // Correct image import path
 import main from '../assets/img/main.png';
 const Home = () => {
@@ -10,14 +9,14 @@ const Home = () => {
       <img 
             className="w-full h-110 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
             src={main}  // Use imported variable here
-            alt="About Us"
+            alt="Home"
             />
             
       <br />
       
       {/* Impact Section */}
       <div className="container mx-auto px-4 py-12">
-        <div className="flex flex-col items-center text-center p-8 bg-white shadow-xl rounded-2xl transform hover:scale-105 transition-transform duration-300">
+        <div className="flex flex-col items-center text-center p-8 bg-white shadow-xl rounded-2xl transform  transition-transform duration-300">
           <h2 className="text-3xl md:text-4xl font-bold text-orange-600 mb-4">
             CREATING IMPACT SINCE 2025
           </h2>
@@ -25,16 +24,16 @@ const Home = () => {
             For over 20 years, Jeevan Asha has been working for the upliftment of the
             underserved communities through Education and Health
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
-            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl ">
+            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow hover:scale-105">
               <span className="text-4xl font-bold text-orange-600 block mb-2">4822</span>
               <span className="text-gray-700">Underprivileged Children Educated</span>
             </div>
-            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow hover:scale-105">
               <span className="text-4xl font-bold text-orange-600 block mb-2">2491</span>
               <span className="text-gray-700">Long Term Impact and Care</span>
             </div>
-            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
+            <div className="bg-orange-50 p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow hover:scale-105">
               <span className="text-4xl font-bold text-orange-600 block mb-2">40000+</span>
               <span className="text-gray-700">Reach (Consultation, Camps, Awareness)</span>
             </div>
@@ -57,10 +56,10 @@ const Home = () => {
 
       {/* Donate Food Section */}
       <div className="container mx-auto px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform hover:scale-105 transition-transform duration-300">
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden transform  transition-transform duration-300">
           <div className="flex flex-col md:flex-row">
             <div className="w-full md:w-1/2 h-64 md:h-auto">
-              <img src={p1} alt="Food Donation" className="w-full h-full object-cover" />
+              <img src={p1} alt="Food Donation" className="w-full h-96 object-cover" />
             </div>
             <div className="p-8 w-full md:w-1/2 flex flex-col justify-between">
               <div>
