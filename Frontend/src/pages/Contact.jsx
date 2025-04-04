@@ -64,7 +64,7 @@
 
 
             <div className="relative z-0 w-full mb-5 group">
-              <textarea type="text" id="floating_company" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer" placeholder=" " required />
+              <textarea type="text" id="floating_company" className="outline-none block w-full px-0 py-2.5 text-sm bg-transparent border-b-2 peer resize-none" placeholder=" " required />
               <label htmlFor="floating_company"  className="absolute text-sm duration-300 transform scale-75 top-3 -z-10 peer-placeholder-shown:scale-100 peer-placeholder-shown:translate-y-0 peer-focus:scale-75 peer-focus:-translate-y-6">Tell me anout your query</label>
             </div>
 
