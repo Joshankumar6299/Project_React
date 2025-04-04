@@ -17,6 +17,25 @@ const Profile = () => {
             Edit
           </button>
         </div>
+
+        {/* About Section */}
+        <div className="mb-4">
+          <h3 className="text-lg font-semibold mb-2">About</h3>
+          <p className="flex items-center text-gray-700 mb-1">
+            <span className="material-icons text-blue-500 mr-2">phone</span>
+            Phone: 1234567890
+          </p>
+          <p className="flex items-center text-gray-700 mb-1">
+            <span className="material-icons text-blue-500 mr-2">email</span>
+            Email: example@gmail.com
+          </p>
+          <p className="flex items-center text-gray-700">
+            <span className="material-icons text-blue-500 mr-2">business</span>
+            NGO Name: Yash Foundation
+          </p>
+        </div>
+
+        
       </div>
     </div>
   );
