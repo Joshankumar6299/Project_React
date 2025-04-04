@@ -1,5 +1,6 @@
 import React from 'react'
 import "../index.css";
+import img from '../assets/img/donate.jpg';
 
 const images = [
     "https://images.pexels.com/photos/29321658/pexels-photo-29321658/free-photo-of-modern-indoor-staircase-with-neon-lights.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
@@ -18,17 +19,17 @@ const Donate = () => {
     <>
       <h1 className="text-5xl font-bold  m-5">Online Donations</h1>
       
-      <img  
-        className="w-full h-auto max-h-[500px] object-cover transition-all duration-300 rounded-lg cursor-pointer filter gray hover:grayscale-0"  
-        src="../public/p6.png"  
-        alt="About Us"
-      />
+      <img 
+            className="w-full h-96 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
+            src={img}  // Use imported variable here
+            alt="Donate"
+            />
 
 <div className="flex flex-col md:flex-row items-center justify-center min-h-screen bg-gray-100 p-6">
       {/* Left Side - Image */}
       <div className="md:w-1/2 flex justify-center ">
         <img
-          src="../public/images.jpg" // Replace with your image path
+          src={img} // Replace with your image path
           alt="Donation"
           className="w-300 mr-20 rounded-lg shadow-lg"
         />
@@ -38,11 +39,37 @@ const Donate = () => {
       <div className="md:w-1/2 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6">Donate Now</h2>
         <form className="space-y-4">
-          <input type="text" placeholder="Name" className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
-          <input type="email" placeholder="Email" className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
-          <input type="date" placeholder="Date of Birth" className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
-          <input type="text" placeholder="WhatsApp No." className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
-          <input type="text" placeholder="Alternate Mobile No." className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
+          <input type="text" placeholder="Name" name="name" className="w-full p-3 border rounded-lg outline-none " />
+
+          <input type="email" placeholder="Email" name="email" className="w-full p-3 border rounded-lg outline-none" />
+
+              <div className="p-4">
+          <h2 className="text-lg font-medium mb-2"> Food Type:</h2>
+
+          <div>
+            <label className="mr-4">
+              <input type="radio" name="choice" value="veg" className="mr-1" />
+              Veg 
+            </label>
+
+            <label className="mr-4">
+              <input type="radio" name="choice" value="non-veg" className="mr-1" />
+              Non Veg
+            </label>
+
+            <label>
+              <input type="radio" name="choice" value="both" className="mr-1" />
+              Both
+            </label>
+          </div>
+        </div>
+
+          <input type="text" placeholder="WhatsApp No." name="phone" className="w-full p-3 border rounded-lg outline-none" />
+
+          <input type="text" placeholder="Address" name="address" className="w-full p-3 border rounded-lg outline-none" />
+
+          <input type="text" placeholder="Quantity" name="quantity" className="w-full p-3 border rounded-lg outline-none" />
+          
           <button type="submit" className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-700">
             Donate
           </button>
