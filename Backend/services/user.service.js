@@ -6,13 +6,13 @@ const registerService = async (data) => {
     try {
 
         const existingUser = await User.findOne({ email: data.email});
-        console.log(existingUser);
+        // console.log(existingUser);
         
         if(existingUser){
             throw new ApiError(409, "User already exists with this email")
         }
         const existingPhone = await User.findOne({phone : data.phone});
-        console.log(existingPhone);
+        // console.log(existingPhone);
         
         if(existingPhone){
             throw new ApiError(409, "User with this phone already exists")
