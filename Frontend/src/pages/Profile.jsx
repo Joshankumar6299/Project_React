@@ -35,7 +35,24 @@ const Profile = () => {
           </p>
         </div>
 
-        
+        <hr className="my-4" />
+
+        {/* Address Section */}
+        <div>
+          <h3 className="text-lg font-semibold mb-2">Address</h3>
+          <p className="flex items-center text-gray-700 mb-1">
+            <span className="material-icons text-green-500 mr-2">place</span>
+            Address: RK University
+          </p>
+          <p className="flex items-center text-gray-700 mb-1">
+            <span className="material-icons text-green-500 mr-2">location_city</span>
+            City: Rajkot (Gujarat)
+          </p>
+          <p className="flex items-center text-gray-700">
+            <span className="material-icons text-green-500 mr-2">pin_drop</span>
+            PinCode: 360020
+          </p>
+        </div>
       </div>
     </div>
   );
