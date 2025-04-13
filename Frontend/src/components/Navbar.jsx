@@ -97,6 +97,9 @@ const Navbar = () => {
               <NavLink to="/contact" className={navLinkClass}>
                 Contact
               </NavLink>
+              <NavLink to="/donate" className={navLinkClass}>
+                Donate
+              </NavLink>
               
               {isLoggedIn ? (
                 <>
@@ -211,6 +214,17 @@ const Navbar = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
+              </NavLink>
+              <NavLink
+                to="/donate"
+                className={({ isActive }) => `block px-3 py-2 rounded-md font-medium ${
+                  isActive 
+                    ? 'text-orange-600 bg-orange-50' 
+                    : 'text-gray-700 hover:text-orange-600 hover:bg-gray-50'
+                }`}
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Donate
               </NavLink>
               
               {isLoggedIn ? (
