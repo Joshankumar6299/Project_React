@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, useLocation } from "react-router-dom"
 import Home from "../pages/Home"
 import About from "../pages/About"
 import Contact from "../pages/Contact"
@@ -9,12 +9,20 @@ import Service from "../pages/service"
 import Donate from "../pages/Donate"
 import LoginPage from "../pages/Login"
 import RegisterPage from "../pages/Register"
+import Dashboard from '../pages/Dashboard'
+import ProtectedRoute from './ProtectedRoute'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
 
 const AppRoutes = () => {
+    const location = useLocation();
+    const isDashboard = location.pathname === '/dashboard';
+
     return (
         <div className="flex flex-col min-h-screen">
+            <ToastContainer />
             <Navbar/>
-            <main className="flex-grow">
+            <main className={`flex-grow ${isDashboard ? 'pt-0' : 'pt-20'}`}>
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/about" element={<About />} />
@@ -24,9 +32,17 @@ const AppRoutes = () => {
                     <Route path="/donate" element={<Donate />} />
                     <Route path="/login" element={<LoginPage />} />
                     <Route path="/register" element={<RegisterPage />} />
+                    <Route 
+                        path='/dashboard' 
+                        element={
+                            <ProtectedRoute>
+                                <Dashboard />
+                            </ProtectedRoute>
+                        }
+                    />
                 </Routes>
             </main>
-            <Footer/>
+            {!isDashboard && <Footer/>}
         </div>
     )
 }
