@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
+const { donateFood } = require('../controllers/donateController.js');
 
-router.post('/donate', (req, res) => {
-    res.send('donate');
-});
+
+router.post('/foodDonate', donateFood);
 
 module.exports = router;
