@@ -1,6 +1,24 @@
-import React from 'react'
+import React, { useState } from 'react'
 import "../index.css";
 import img from '../assets/img/donate.jpg';
+import { toast } from 'react-toastify';
+
+// Add CSS to hide the number input spinners
+const styles = {
+  hideNumberSpinners: `
+    /* For Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    /* For Firefox */
+    input[type=number] {
+      -moz-appearance: textfield;
+    }
+  `
+};
 
 const images = [
     "https://images.pexels.com/photos/29321658/pexels-photo-29321658/free-photo-of-modern-indoor-staircase-with-neon-lights.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load",
@@ -15,10 +33,102 @@ const images = [
   
 
 const Donate = () => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    foodType: '',
+    phone: '',
+    address: '',
+    quantity: ''
+  });
+  
+  const [phoneError, setPhoneError] = useState('');
+  const [quantityError, setQuantityError] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'phone') {
+      // Only allow digits, and limit to 10 digits
+      const digitsOnly = value.replace(/\D/g, '');
+      const truncated = digitsOnly.slice(0, 10);
+      
+      if (value !== truncated && value.length > truncated.length) {
+        setPhoneError('Please enter only 10 digits');
+      } else {
+        setPhoneError('');
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: truncated
+      }));
+    } else if (name === 'quantity') {
+      // Only allow positive numbers
+      const numberValue = value.replace(/[^0-9]/g, '');
+      
+      if (value !== numberValue) {
+        setQuantityError('Please enter numbers only');
+      } else {
+        setQuantityError('');
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: numberValue
+      }));
+    } else if (name === 'foodType') {
+      setFormData(prev => ({
+        ...prev,
+        foodType: value
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.name || !formData.email || !formData.foodType || !formData.phone || !formData.address || !formData.quantity) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+    
+    // Validate phone number
+    if (formData.phone.length !== 10) {
+      setPhoneError('Phone number must be 10 digits');
+      return;
+    }
+    
+    // Validate quantity
+    if (parseInt(formData.quantity) <= 0) {
+      setQuantityError('Quantity must be greater than 0');
+      return;
+    }
+    
+    // Here you would make an API call to submit the form
+    console.log('Donation submitted:', formData);
+    
+    toast.success('Thank you for your donation! We will contact you soon.');
+    
+    // Reset form after successful submission
+    setFormData({
+      name: '',
+      email: '',
+      foodType: '',
+      phone: '',
+      address: '',
+      quantity: ''
+    });
+  };
+
   return (
     <>
-      <h1 className="text-5xl font-bold  m-5">Online Donations</h1>
-      
       <img 
             className="w-full h-96 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
             src={img}  // Use imported variable here
@@ -38,39 +148,104 @@ const Donate = () => {
       {/* Right Side - Form */}
       <div className="md:w-1/2 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6">Donate Now</h2>
-        <form className="space-y-4">
-          <input type="text" placeholder="Name" name="name" className="w-full p-3 border rounded-lg outline-none " />
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <input 
+            type="text" 
+            placeholder="Name" 
+            name="name" 
+            value={formData.name}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg outline-none focus:border-blue-500" 
+            required 
+          />
 
-          <input type="email" placeholder="Email" name="email" className="w-full p-3 border rounded-lg outline-none" />
+          <input 
+            type="email" 
+            placeholder="Email" 
+            name="email" 
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg outline-none focus:border-blue-500" 
+            required 
+          />
 
-              <div className="p-4">
-          <h2 className="text-lg font-medium mb-2"> Food Type:</h2>
+          <div className="p-4 border rounded-lg">
+            <h2 className="text-lg font-medium mb-2">Food Type:</h2>
 
-          <div>
-            <label className="mr-4">
-              <input type="radio" name="choice" value="veg" className="mr-1" />
-              Veg 
-            </label>
+            <div>
+              <label className="mr-4 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="foodType" 
+                  value="veg" 
+                  checked={formData.foodType === 'veg'}
+                  onChange={handleChange}
+                  className="mr-1" 
+                  required
+                />
+                Veg 
+              </label>
 
-            <label className="mr-4">
-              <input type="radio" name="choice" value="non-veg" className="mr-1" />
-              Non Veg
-            </label>
+              <label className="mr-4 cursor-pointer">
+                <input 
+                  type="radio" 
+                  name="foodType" 
+                  value="non-veg" 
+                  checked={formData.foodType === 'non-veg'}
+                  onChange={handleChange}
+                  className="mr-1" 
+                />
+                Non Veg
+              </label>
 
-            <label>
-              <input type="radio" name="choice" value="both" className="mr-1" />
-              Both
-            </label>
+            </div>
           </div>
-        </div>
 
-          <input type="text" placeholder="WhatsApp No." name="phone" className="w-full p-3 border rounded-lg outline-none" />
+          <div className="relative">
+            <input 
+              type="tel" 
+              placeholder="WhatsApp No." 
+              name="phone" 
+              value={formData.phone}
+              onChange={handleChange}
+              className="w-full p-3 border rounded-lg outline-none focus:border-blue-500" 
+              pattern="[0-9]{10}"
+              maxLength="10"
+              required 
+            />
+            {phoneError && (
+              <p className="text-red-500 text-xs mt-1">{phoneError}</p>
+            )}
+          </div>
 
-          <input type="text" placeholder="Address" name="address" className="w-full p-3 border rounded-lg outline-none" />
+          <input 
+            type="text" 
+            placeholder="Address" 
+            name="address" 
+            value={formData.address}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg outline-none focus:border-blue-500" 
+            required 
+          />
 
-          <input type="text" placeholder="Quantity" name="quantity" className="w-full p-3 border rounded-lg outline-none" />
+          <div className="relative">
+            <style>{styles.hideNumberSpinners}</style>
+            <input 
+              type="number" 
+              placeholder="Quantity (in numbers)" 
+              name="quantity" 
+              value={formData.quantity}
+              onChange={handleChange}
+              className="w-full p-3 border rounded-lg outline-none focus:border-blue-500" 
+              min="1"
+              required 
+            />
+            {quantityError && (
+              <p className="text-red-500 text-xs mt-1">{quantityError}</p>
+            )}
+          </div>
           
-          <button type="submit" className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-700">
+          <button type="submit" className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">
             Donate
           </button>
         </form>
