@@ -1,10 +1,37 @@
-import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import logo from '../assets/img/logo2.png';
+import { toast } from 'react-toastify';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Check if user is logged in when component mounts or location changes
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem('accessToken');
+      setIsLoggedIn(!!token);
+    };
+    
+    checkAuth();
+    
+    // Set up a listener for storage events (logout in another tab)
+    const handleStorageChange = () => {
+      checkAuth();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [location.pathname]);
+
+  // Check if on dashboard page
+  const isDashboard = location.pathname === '/dashboard';
 
   // NavLink active class styling
   const navLinkClass = ({ isActive }) => {
@@ -15,8 +42,32 @@ const Navbar = () => {
 
   // Handle the 'Get Started' button click (navigate to login page)
   const handleGetStarted = () => {
-    navigate('/login'); // Navigate directly to the login page
+    navigate('/login');
   };
+
+  // Handle logout
+  const handleLogout = () => {
+    // Clear authentication data
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    
+    setIsLoggedIn(false);
+    
+    // Show logout toast
+    toast.success('Logged out successfully!', {
+      position: 'top-right',
+      autoClose: 2000,
+    });
+    
+    // Navigate to home page
+    navigate('/');
+  };
+
+  // If on dashboard, don't show the navbar
+  if (isDashboard) {
+    return null;
+  }
 
   return (
     <>
@@ -46,12 +97,27 @@ const Navbar = () => {
               <NavLink to="/contact" className={navLinkClass}>
                 Contact
               </NavLink>
-              <button
-                onClick={handleGetStarted} // Navigate to the login page
-                className="bg-orange-600 text-white px-6 py-2 rounded-full hover:bg-orange-700 transition-colors duration-300 font-medium"
-              >
-                Get Started
-              </button>
+              
+              {isLoggedIn ? (
+                <>
+                  <NavLink to="/dashboard" className={navLinkClass}>
+                    Dashboard
+                  </NavLink>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-red-600 text-white px-6 py-2 rounded-full hover:bg-red-700 transition-colors duration-300 font-medium"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleGetStarted}
+                  className="bg-orange-600 text-white px-6 py-2 rounded-full hover:bg-orange-700 transition-colors duration-300 font-medium"
+                >
+                  Get Started
+                </button>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -146,15 +212,41 @@ const Navbar = () => {
               >
                 Contact
               </NavLink>
-              <button
-                onClick={() => {
-                  handleGetStarted(); // Navigate to the login page
-                  setIsMenuOpen(false); // Close the mobile menu
-                }}
-                className="w-full text-center bg-orange-600 text-white px-4 py-2 rounded-full hover:bg-orange-700 transition-colors duration-300 font-medium mt-2"
-              >
-                Get Started
-              </button>
+              
+              {isLoggedIn ? (
+                <>
+                  <NavLink
+                    to="/dashboard"
+                    className={({ isActive }) => `block px-3 py-2 rounded-md font-medium ${
+                      isActive 
+                        ? 'text-orange-600 bg-orange-50' 
+                        : 'text-gray-700 hover:text-orange-600 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Dashboard
+                  </NavLink>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setIsMenuOpen(false);
+                    }}
+                    className="w-full text-center bg-red-600 text-white px-4 py-2 rounded-full hover:bg-red-700 transition-colors duration-300 font-medium mt-2"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => {
+                    handleGetStarted();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full text-center bg-orange-600 text-white px-4 py-2 rounded-full hover:bg-orange-700 transition-colors duration-300 font-medium mt-2"
+                >
+                  Get Started
+                </button>
+              )}
             </div>
           </div>
         )}
