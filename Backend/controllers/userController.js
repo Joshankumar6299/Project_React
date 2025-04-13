@@ -1,7 +1,7 @@
 const ApiError = require("../utils/errorHandler.js")
 const ApiResponse = require('../utils/apiResponse.js')
 const asyncHandler = require('../utils/asyncHandler.js')
-const {registerService, loginService } = require ("../services/user.service.js")
+const {registerService, loginService, updateUserService, deleteUserService } = require ("../services/user.service.js")
 const {generateAccessToken, generateRefreshToken, setTokensCookie} = require("../utils/tokenGenerator.js")
 
 
@@ -76,9 +76,36 @@ const logout = asyncHandler(async (req, res) => {
         );
 });
 
+const updateUser = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const updateData = req.body;
+
+    if (!userId) throw new ApiError(400, "User ID is required");
+
+    const updatedUser = await updateUserService(userId, updateData);
+    updatedUser.password = undefined;
+
+    return res.status(200).json(
+        new ApiResponse(200, "User updated successfully", updatedUser)
+    );
+});
+
+const deleteUser = asyncHandler(async (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) throw new ApiError(400, "User ID is required");
+
+    await deleteUserService(userId);
+
+    return res.status(200).json(
+        new ApiResponse(200, "User deleted successfully", null)
+    );
+});
 
 module.exports = {
     register,
     login,
     logout,
+    updateUser,
+    deleteUser
 }
