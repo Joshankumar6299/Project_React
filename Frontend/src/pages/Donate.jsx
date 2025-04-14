@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import "../index.css";
 import img from '../assets/img/donate.jpg';
-import { toast, ToastContainer } from 'react-toastify';
+import { toast } from 'react-toastify';
 import axios from '../config/axios';
 
 // Add CSS to hide the number input spinners
@@ -37,10 +36,11 @@ const Donate = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    foodType: '',
+    foodType: 'veg', // Set default to 'veg'
     phone: '',
     address: '',
     quantity: '',
@@ -49,6 +49,21 @@ const Donate = () => {
   
   const [phoneError, setPhoneError] = useState('');
   const [quantityError, setQuantityError] = useState('');
+
+  // Fetch user profile including donation history
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      
+      const response = await axios.get('/user/profile');
+      if (response.data && response.data.success) {
+        setUserProfile(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   // Check if user is logged in and get user data
   useEffect(() => {
@@ -74,6 +89,9 @@ const Donate = () => {
         setUserId(userData._id);
         console.log('Setting user ID from localStorage:', userData._id);
         
+        // Fetch user profile to get donation history
+        fetchUserProfile();
+        
         // Display toast to confirm user is logged in
         toast.info(`Logged in as ${userData.name || 'user'}`);
       } else {
@@ -86,7 +104,8 @@ const Donate = () => {
           ...prev,
           name: userData.name || prev.name,
           email: userData.email || prev.email,
-          phone: userData.phone || prev.phone
+          phone: userData.phone || prev.phone,
+          foodType: 'veg' // Ensure default is 'veg'
         }));
       }
     } catch (err) {
@@ -268,7 +287,7 @@ const Donate = () => {
         setFormData({
           name: '',
           email: '',
-          foodType: '',
+          foodType: 'veg',
           phone: '',
           address: '',
           quantity: '',
@@ -291,64 +310,80 @@ const Donate = () => {
     } catch (error) {
       console.error('Error submitting donation:', error);
       
-      // Handle different types of errors
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        console.error('Error response:', error.response.data);
-        
-        // Try to extract the most specific error message
-        let errorMessage;
-        if (error.response.data?.message) {
-          errorMessage = error.response.data.message;
-        } else if (error.response.data?.error) {
-          errorMessage = error.response.data.error;
-        } else if (typeof error.response.data === 'string') {
-          errorMessage = error.response.data;
+      // Make sure to always update or dismiss the loading toast
+      try {
+        // Handle different types of errors
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Error response:', error.response.data);
+          
+          // Try to extract the most specific error message
+          let errorMessage;
+          if (error.response.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.response.data?.error) {
+            errorMessage = error.response.data.error;
+          } else if (typeof error.response.data === 'string') {
+            errorMessage = error.response.data;
+          } else {
+            errorMessage = `Server error (${error.response.status})`;
+          }
+          
+          toast.update(loadingToastId, { 
+            render: errorMessage, 
+            type: "error", 
+            isLoading: false, 
+            autoClose: 5000 
+          });
+          
+          // Log detailed error information for debugging
+          console.error('Error details:', {
+            status: error.response.status,
+            data: error.response.data,
+            headers: error.response.headers
+          });
+        } else if (error.request) {
+          // The request was made but no response was received
+          toast.update(loadingToastId, { 
+            render: 'No response from server. Please check your internet connection.', 
+            type: "error", 
+            isLoading: false, 
+            autoClose: 5000 
+          });
+          console.error('No response received:', error.request);
         } else {
-          errorMessage = `Server error (${error.response.status})`;
+          // Something happened in setting up the request that triggered an Error
+          toast.update(loadingToastId, { 
+            render: 'An error occurred while setting up the request', 
+            type: "error", 
+            isLoading: false, 
+            autoClose: 5000 
+          });
+          console.error('Error setting up request:', error.message);
         }
-        
-        toast.update(loadingToastId, { 
-          render: errorMessage, 
-          type: "error", 
-          isLoading: false, 
-          autoClose: 5000 
+      } catch (toastError) {
+        // If updating the toast fails for some reason, dismiss it and show a new one
+        toast.dismiss(loadingToastId);
+        toast.error("An error occurred during donation submission", {
+          position: "top-right",
+          autoClose: 5000
         });
-        
-        // Log detailed error information for debugging
-        console.error('Error details:', {
-          status: error.response.status,
-          data: error.response.data,
-          headers: error.response.headers
-        });
-      } else if (error.request) {
-        // The request was made but no response was received
-        toast.update(loadingToastId, { 
-          render: 'No response from server. Please check your internet connection.', 
-          type: "error", 
-          isLoading: false, 
-          autoClose: 5000 
-        });
-        console.error('No response received:', error.request);
-      } else {
-        // Something happened in setting up the request that triggered an Error
-        toast.update(loadingToastId, { 
-          render: 'An error occurred while setting up the request', 
-          type: "error", 
-          isLoading: false, 
-          autoClose: 5000 
-        });
-        console.error('Error setting up request:', error.message);
+        console.error('Error updating toast:', toastError);
       }
     } finally {
       setIsSubmitting(false);
+      
+      // Final fallback - if somehow the toast wasn't updated or dismissed,
+      // dismiss it here to ensure it doesn't get stuck
+      setTimeout(() => {
+        toast.dismiss(loadingToastId);
+      }, 500);
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <ToastContainer position="top-right" autoClose={3000} />
       <style>{styles.hideNumberSpinners}</style>
       <img 
             className="w-full h-96 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
@@ -369,6 +404,15 @@ const Donate = () => {
       {/* Right Side - Form */}
       <div className="md:w-1/2 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6">Donate Now</h2>
+        
+        {/* Show donation history if user has donated before */}
+        {userProfile && userProfile.totalDonations > 0 && (
+          <div className="mb-4 bg-green-50 text-green-700 p-3 rounded-lg">
+            <p className="font-medium">Thank you for your previous {userProfile.totalDonations} donation{userProfile.totalDonations > 1 ? 's' : ''}!</p>
+            <p className="text-sm">Your continued support makes a difference.</p>
+          </div>
+        )}
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input 
             type="text" 
