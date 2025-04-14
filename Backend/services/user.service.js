@@ -22,7 +22,10 @@ const registerService = async (data) => {
             fullname: data.fullname,
             password: data.password,
             email: data.email,
-            phone: data.phone
+            phone: data.phone,
+            city: data.city,
+            pincode: data.pincode,
+            address: data.address
         });
 
         newUser.password = undefined; 
