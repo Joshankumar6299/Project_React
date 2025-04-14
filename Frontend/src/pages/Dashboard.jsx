@@ -4,6 +4,7 @@ import { Bar, Pie } from "react-chartjs-2";
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend } from "chart.js";
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
 // import TotalUser from "./totalUser";
 // import TotalDonor from "./totalDonar";
 import Profile from "./Profile";
@@ -13,23 +14,93 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Le
 const Dashboard = () => {
   const [activePage, setActivePage] = useState("Dashboard");
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [donations, setDonations] = useState([]);
   const navigate = useNavigate();
 
-  // Check authentication on component mount
-  useEffect(() => {
-    // Check if the user is authenticated
-    const token = localStorage.getItem('accessToken');
-    console.log("Dashboard - Token found:", !!token);
-    
-    if (!token) {
-      console.log("Dashboard - No token found, redirecting to login");
-      toast.error("Authentication required. Please login.");
-      navigate('/login', { state: { from: '/dashboard' } });
-      return;
+  // Fetch user donations
+  const fetchDonations = async () => {
+    try {
+      const response = await axios.get('/donate/user-donations');
+      if (response.data && response.data.success) {
+        setDonations(response.data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching donations:', error);
+      toast.error('Failed to fetch donations');
     }
+  };
+
+  // Check authentication and fetch data on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Check if the user is authenticated
+        const token = localStorage.getItem('accessToken');
+        console.log("Dashboard - Token found:", !!token);
+        
+        if (!token) {
+          console.log("Dashboard - No token found, redirecting to login");
+          toast.error("Authentication required. Please login.");
+          navigate('/login', { state: { from: '/dashboard' } });
+          return;
+        }
+        
+        // Verify token is properly formatted
+        if (token.trim() === '') {
+          console.error("Dashboard - Empty token found");
+          localStorage.removeItem('accessToken');
+          toast.error("Invalid authentication. Please login again.");
+          navigate('/login', { state: { from: '/dashboard' } });
+          return;
+        }
+        
+        // Get user data
+        try {
+          const userString = localStorage.getItem('user');
+          if (!userString) {
+            console.error("Dashboard - No user data found");
+            toast.error("User data not found. Please login again.");
+            localStorage.removeItem('accessToken');
+            navigate('/login', { state: { from: '/dashboard' } });
+            return;
+          }
+          
+          const userData = JSON.parse(userString);
+          
+          if (!userData || !userData._id) {
+            console.error("Dashboard - Invalid user data:", userData);
+            toast.error("Invalid user data. Please login again.");
+            localStorage.removeItem('accessToken');
+            navigate('/login', { state: { from: '/dashboard' } });
+            return;
+          }
+          
+          setUser(userData);
+          setIsAdmin(userData.role === 'admin');
+          console.log("Dashboard - User data loaded:", userData.fullname);
+          
+          // Fetch user donations
+          await fetchDonations();
+          
+          // Set loading to false since we have valid token and user data
+          setIsLoading(false);
+        } catch (parseError) {
+          console.error("Error parsing user data:", parseError);
+          toast.error("Error loading user data. Please login again.");
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('user');
+          navigate('/login', { state: { from: '/dashboard' } });
+        }
+      } catch (error) {
+        console.error("Dashboard - Authentication error:", error);
+        toast.error("Authentication error. Please login again.");
+        navigate('/login', { state: { from: '/dashboard' } });
+      }
+    };
     
-    // Set loading to false since we have a token
-    setIsLoading(false);
+    checkAuth();
   }, [navigate]);
 
   // Data for Bar Chart
@@ -135,11 +206,15 @@ const Dashboard = () => {
       <div className="w-1/4 bg-blue-700 text-white flex flex-col">
         <div className="p-6 text-center">
           <h1 className="text-2xl font-bold">Food Donate</h1>
-          <h1 className="mt-2">Welcome Admin</h1>
+          <h1 className="mt-2">Welcome {isAdmin ? 'Admin' : user?.fullname || 'User'}</h1>
         </div>
         <nav className="flex-grow">
           <ul className="space-y-2 px-4">
-            {["Dashboard", "Total User", "Total Donor", "Profile"].map((page) => (
+            {[
+              "Dashboard", 
+              ...(isAdmin ? ["Total User", "Total Donor"] : []), 
+              "Profile"
+            ].map((page) => (
               <li key={page}>
                 <button
                   onClick={() => setActivePage(page)}
@@ -181,16 +256,58 @@ const Dashboard = () => {
               {/* Stats Section */}
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div className="bg-blue-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <h3 className="text-lg font-bold">Total Donation</h3>
-                  <p className="text-2xl font-bold">500K</p>
+                  <h3 className="text-lg font-bold">Total Donations</h3>
+                  <p className="text-2xl font-bold">{donations.length}</p>
                 </div>
                 <div className="bg-green-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <h3 className="text-lg font-bold">Weekly Donation</h3>
-                  <p className="text-2xl font-bold">100K</p>
+                  <h3 className="text-lg font-bold">Total Quantity</h3>
+                  <p className="text-2xl font-bold">
+                    {donations.reduce((sum, donation) => sum + parseInt(donation.foodQuantity || 0), 0)}
+                  </p>
                 </div>
                 <div className="bg-teal-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-                  <h3 className="text-lg font-bold">Daily Donation</h3>
-                  <p className="text-2xl font-bold">20K</p>
+                  <h3 className="text-lg font-bold">Pending Donations</h3>
+                  <p className="text-2xl font-bold">
+                    {donations.filter(donation => donation.status === 'pending').length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Recent Donations Table */}
+              <div className="bg-white p-4 rounded-lg shadow-md">
+                <h3 className="text-lg font-bold mb-4">Recent Donations</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        <th className="px-4 py-2 text-left">Date</th>
+                        <th className="px-4 py-2 text-left">Food Type</th>
+                        <th className="px-4 py-2 text-left">Quantity</th>
+                        <th className="px-4 py-2 text-left">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {donations.slice(0, 5).map((donation) => (
+                        <tr key={donation._id} className="border-t">
+                          <td className="px-4 py-2">
+                            {new Date(donation.donationDate).toLocaleDateString()}
+                          </td>
+                          <td className="px-4 py-2">{donation.foodType}</td>
+                          <td className="px-4 py-2">{donation.foodQuantity}</td>
+                          <td className="px-4 py-2">
+                            <span className={`px-2 py-1 rounded-full text-sm ${
+                              donation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                              donation.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                              donation.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {donation.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
