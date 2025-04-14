@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from '../config/axios';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -139,7 +138,6 @@ export default function LoginPage() {
 
   return (
     <div className="h-screen flex items-center justify-center bg-gray-50">
-      <ToastContainer />
       <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg flex">
         {/* Sign In Section */}
         <div className="w-1/2 p-8 flex flex-col justify-center">
