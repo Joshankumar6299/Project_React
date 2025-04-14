@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import "../index.css";
 import img from '../assets/img/donate.jpg';
-import { toast } from 'react-toastify';
-import axios from 'axios';
+import { toast, ToastContainer } from 'react-toastify';
+import axios from '../config/axios';
 
 // Add CSS to hide the number input spinners
 const styles = {
@@ -244,44 +244,27 @@ const Donate = () => {
         console.log('No user ID available, donation will be anonymous');
       }
       
-      // Add authorization header if logged in
-      const config = {
+      console.log('Sending donation data:', backendData);
+      
+      const response = await axios.post('/donate/donate', backendData, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
-      };
+      });
       
-      if (isLoggedIn) {
-        const token = localStorage.getItem('accessToken');
-        console.log('Using token for auth:', token ? 'yes' : 'no');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      }
+      console.log('Donation response:', response);
       
-      console.log('Sending data to backend:', JSON.stringify(backendData));
-      
-      // Add baseURL explicitly in case it's missing in axios instance
-      const baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-      const apiURL = `${baseURL}/donate/donate`;
-      console.log('Making API request to:', apiURL);
-      
-      try {
-        // Make API call to backend with explicit URL
-        const response = await axios.post(apiURL, backendData, config);
-        
-        console.log('Donation submitted successfully:', response.data);
-        
-        // Show success message with donation ID for reference
-        const donationId = response.data?.data?._id || '';
-        toast.update(loadingToastId, { 
-          render: `Thank you for your donation! Reference ID: ${donationId.substring(0, 8)}`, 
-          type: "success", 
-          isLoading: false, 
-          autoClose: 5000 
+      if (response.data && response.data.statusCode === 200) {
+        // Update loading toast to success
+        toast.update(loadingToastId, {
+          render: response.data.message || "Donation submitted successfully!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000
         });
         
-        // Reset form after successful submission
+        // Reset form
         setFormData({
           name: '',
           email: '',
@@ -291,75 +274,82 @@ const Donate = () => {
           quantity: '',
           notes: ''
         });
-      } catch (error) {
-        console.error('Error submitting donation:', error);
         
-        // Handle different types of errors
-        if (error.response) {
-          // The request was made and the server responded with a status code
-          // that falls out of the range of 2xx
-          console.error('Error response:', error.response.data);
-          
-          // Try to extract the most specific error message
-          let errorMessage;
-          if (error.response.data?.message) {
-            errorMessage = error.response.data.message;
-          } else if (error.response.data?.error) {
-            errorMessage = error.response.data.error;
-          } else if (typeof error.response.data === 'string') {
-            errorMessage = error.response.data;
-          } else {
-            errorMessage = `Server error (${error.response.status})`;
-          }
-          
-          toast.update(loadingToastId, { 
-            render: errorMessage, 
-            type: "error", 
-            isLoading: false, 
-            autoClose: 5000 
-          });
-          
-          // Log detailed error information for debugging
-          console.error('Error details:', {
-            status: error.response.status,
-            data: error.response.data,
-            headers: error.response.headers
-          });
-        } else if (error.request) {
-          // The request was made but no response was received
-          toast.update(loadingToastId, { 
-            render: 'No response from server. Please check your internet connection.', 
-            type: "error", 
-            isLoading: false, 
-            autoClose: 5000 
-          });
-          console.error('No response received:', error.request);
-        } else {
-          // Something happened in setting up the request that triggered an Error
-          toast.update(loadingToastId, { 
-            render: 'An error occurred while setting up the request', 
-            type: "error", 
-            isLoading: false, 
-            autoClose: 5000 
-          });
-          console.error('Error setting up request:', error.message);
-        }
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          window.location.replace('/dashboard');
+        }, 2000);
+      } else {
+        // Handle unexpected response format
+        toast.update(loadingToastId, {
+          render: response.data?.message || "Donation submitted but with unexpected response format",
+          type: "warning",
+          isLoading: false,
+          autoClose: 3000
+        });
       }
-    } catch (outerError) {
-      console.error('Unexpected error in submission process:', outerError);
-      toast.update(loadingToastId, { 
-        render: 'An unexpected error occurred. Please try again.', 
-        type: "error", 
-        isLoading: false, 
-        autoClose: 5000 
-      });
+    } catch (error) {
+      console.error('Error submitting donation:', error);
+      
+      // Handle different types of errors
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        console.error('Error response:', error.response.data);
+        
+        // Try to extract the most specific error message
+        let errorMessage;
+        if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (typeof error.response.data === 'string') {
+          errorMessage = error.response.data;
+        } else {
+          errorMessage = `Server error (${error.response.status})`;
+        }
+        
+        toast.update(loadingToastId, { 
+          render: errorMessage, 
+          type: "error", 
+          isLoading: false, 
+          autoClose: 5000 
+        });
+        
+        // Log detailed error information for debugging
+        console.error('Error details:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      } else if (error.request) {
+        // The request was made but no response was received
+        toast.update(loadingToastId, { 
+          render: 'No response from server. Please check your internet connection.', 
+          type: "error", 
+          isLoading: false, 
+          autoClose: 5000 
+        });
+        console.error('No response received:', error.request);
+      } else {
+        // Something happened in setting up the request that triggered an Error
+        toast.update(loadingToastId, { 
+          render: 'An error occurred while setting up the request', 
+          type: "error", 
+          isLoading: false, 
+          autoClose: 5000 
+        });
+        console.error('Error setting up request:', error.message);
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-100">
+      <ToastContainer position="top-right" autoClose={3000} />
+      <style>{styles.hideNumberSpinners}</style>
       <img 
             className="w-full h-96 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
             src={img}  // Use imported variable here
@@ -544,7 +534,7 @@ const Donate = () => {
         ))}
       </div>
     </div>
-    </>
+    </div>
   )
 }
 
