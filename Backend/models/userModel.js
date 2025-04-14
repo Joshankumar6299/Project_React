@@ -13,10 +13,22 @@ const userSchema = new mongoose.Schema({
         trim: true,
         lowercase: true,
     },
+    city:{
+        type: String,
+        required: true,
+    },
+    pincode:{
+        type: String,
+        required: true,
+    },
     password: {
         type: String,
         required: true,
         minlength: 6,
+    },
+    address:{
+        type: String,
+        required: true,
     },
     phone: {
         type: String,
