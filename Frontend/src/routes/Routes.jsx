@@ -20,7 +20,18 @@ const AppRoutes = () => {
 
     return (
         <div className="flex flex-col min-h-screen">
-            <ToastContainer />
+            <ToastContainer 
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+            />
             <Navbar/>
             <main className={`flex-grow ${isDashboard ? 'pt-0' : 'pt-20'}`}>
                 <Routes>
