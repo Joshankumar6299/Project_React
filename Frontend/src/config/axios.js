@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create a custom instance of axios with default config
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
+    baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000',
     timeout: 15000, // Increased timeout to 15 seconds for slower connections
     headers: {
         'Content-Type': 'application/json',
