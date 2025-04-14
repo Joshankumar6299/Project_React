@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import "../index.css";
 import img from '../assets/img/donate.jpg';
 import { toast } from 'react-toastify';
-import axios from 'axios';
+import axios from '../config/axios';
 
 // Add CSS to hide the number input spinners
 const styles = {
@@ -37,10 +36,11 @@ const Donate = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    foodType: '',
+    foodType: 'veg', // Set default to 'veg'
     phone: '',
     address: '',
     quantity: '',
@@ -49,6 +49,21 @@ const Donate = () => {
   
   const [phoneError, setPhoneError] = useState('');
   const [quantityError, setQuantityError] = useState('');
+
+  // Fetch user profile including donation history
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return;
+      
+      const response = await axios.get('/user/profile');
+      if (response.data && response.data.success) {
+        setUserProfile(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
 
   // Check if user is logged in and get user data
   useEffect(() => {
@@ -74,6 +89,9 @@ const Donate = () => {
         setUserId(userData._id);
         console.log('Setting user ID from localStorage:', userData._id);
         
+        // Fetch user profile to get donation history
+        fetchUserProfile();
+        
         // Display toast to confirm user is logged in
         toast.info(`Logged in as ${userData.name || 'user'}`);
       } else {
@@ -86,7 +104,8 @@ const Donate = () => {
           ...prev,
           name: userData.name || prev.name,
           email: userData.email || prev.email,
-          phone: userData.phone || prev.phone
+          phone: userData.phone || prev.phone,
+          foodType: 'veg' // Ensure default is 'veg'
         }));
       }
     } catch (err) {
@@ -244,56 +263,55 @@ const Donate = () => {
         console.log('No user ID available, donation will be anonymous');
       }
       
-      // Add authorization header if logged in
-      const config = {
+      console.log('Sending donation data:', backendData);
+      
+      const response = await axios.post('/donate/donate', backendData, {
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
-      };
+      });
       
-      if (isLoggedIn) {
-        const token = localStorage.getItem('accessToken');
-        console.log('Using token for auth:', token ? 'yes' : 'no');
-        if (token) {
-          config.headers.Authorization = `Bearer ${token}`;
-        }
-      }
+      console.log('Donation response:', response);
       
-      console.log('Sending data to backend:', JSON.stringify(backendData));
-      
-      // Add baseURL explicitly in case it's missing in axios instance
-      const baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
-      const apiURL = `${baseURL}/donate/donate`;
-      console.log('Making API request to:', apiURL);
-      
-      try {
-        // Make API call to backend with explicit URL
-        const response = await axios.post(apiURL, backendData, config);
-        
-        console.log('Donation submitted successfully:', response.data);
-        
-        // Show success message with donation ID for reference
-        const donationId = response.data?.data?._id || '';
-        toast.update(loadingToastId, { 
-          render: `Thank you for your donation! Reference ID: ${donationId.substring(0, 8)}`, 
-          type: "success", 
-          isLoading: false, 
-          autoClose: 5000 
+      if (response.data && response.data.statusCode === 200) {
+        // Update loading toast to success
+        toast.update(loadingToastId, {
+          render: response.data.message || "Donation submitted successfully!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000
         });
         
-        // Reset form after successful submission
+        // Reset form
         setFormData({
           name: '',
           email: '',
-          foodType: '',
+          foodType: 'veg',
           phone: '',
           address: '',
           quantity: '',
           notes: ''
         });
-      } catch (error) {
-        console.error('Error submitting donation:', error);
         
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          window.location.replace('/dashboard');
+        }, 2000);
+      } else {
+        // Handle unexpected response format
+        toast.update(loadingToastId, {
+          render: response.data?.message || "Donation submitted but with unexpected response format",
+          type: "warning",
+          isLoading: false,
+          autoClose: 3000
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting donation:', error);
+      
+      // Make sure to always update or dismiss the loading toast
+      try {
         // Handle different types of errors
         if (error.response) {
           // The request was made and the server responded with a status code
@@ -344,22 +362,29 @@ const Donate = () => {
           });
           console.error('Error setting up request:', error.message);
         }
+      } catch (toastError) {
+        // If updating the toast fails for some reason, dismiss it and show a new one
+        toast.dismiss(loadingToastId);
+        toast.error("An error occurred during donation submission", {
+          position: "top-right",
+          autoClose: 5000
+        });
+        console.error('Error updating toast:', toastError);
       }
-    } catch (outerError) {
-      console.error('Unexpected error in submission process:', outerError);
-      toast.update(loadingToastId, { 
-        render: 'An unexpected error occurred. Please try again.', 
-        type: "error", 
-        isLoading: false, 
-        autoClose: 5000 
-      });
     } finally {
       setIsSubmitting(false);
+      
+      // Final fallback - if somehow the toast wasn't updated or dismissed,
+      // dismiss it here to ensure it doesn't get stuck
+      setTimeout(() => {
+        toast.dismiss(loadingToastId);
+      }, 500);
     }
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-100">
+      <style>{styles.hideNumberSpinners}</style>
       <img 
             className="w-full h-96 object-cover transition-all duration-300 rounded-lg cursor-pointer filter grayscale hover:grayscale-0" 
             src={img}  // Use imported variable here
@@ -379,6 +404,15 @@ const Donate = () => {
       {/* Right Side - Form */}
       <div className="md:w-1/2 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6">Donate Now</h2>
+        
+        {/* Show donation history if user has donated before */}
+        {userProfile && userProfile.totalDonations > 0 && (
+          <div className="mb-4 bg-green-50 text-green-700 p-3 rounded-lg">
+            <p className="font-medium">Thank you for your previous {userProfile.totalDonations} donation{userProfile.totalDonations > 1 ? 's' : ''}!</p>
+            <p className="text-sm">Your continued support makes a difference.</p>
+          </div>
+        )}
+
         <form className="space-y-4" onSubmit={handleSubmit}>
           <input 
             type="text" 
@@ -544,7 +578,7 @@ const Donate = () => {
         ))}
       </div>
     </div>
-    </>
+    </div>
   )
 }
 

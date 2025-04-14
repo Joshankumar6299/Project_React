@@ -6,15 +6,18 @@ const {generateAccessToken, generateRefreshToken, setTokensCookie} = require("..
 
 
 const register = asyncHandler(async(req, res) => {
-    const {phone, email, password, fullname} = req.body;
+    const {phone, email, password, fullname, city, pincode, address} = req.body;
     
     if (!phone) throw new ApiError(400, "Phone number is required");
     if (!email) throw new ApiError(400, "Email is required");
     if (!password) throw new ApiError(400, "Password is required");
     if (!fullname) throw new ApiError(400, "Full name is required");
+    if (!city) throw new ApiError(400, "City is required");
+    if (!pincode) throw new ApiError(400, "Pincode is required");
+    if (!address) throw new ApiError(400, "Address is required");
 
     const data = {
-        phone, email, password, fullname
+        phone, email, password, fullname, city, pincode, address
     }
     const user = await registerService(data);
 
@@ -102,10 +105,31 @@ const deleteUser = asyncHandler(async (req, res) => {
     );
 });
 
+// Debug function to check JWT settings - REMOVE IN PRODUCTION
+const checkJwtConfig = async(req, res) => {
+    try {
+        const jwtSecret = process.env.JWT_SECRET;
+        const maskSecret = jwtSecret ? `${jwtSecret.substring(0, 3)}...` : null;
+        
+        res.status(200).json({
+            message: "JWT Configuration Status",
+            jwt_secret_exists: !!jwtSecret,
+            jwt_secret_length: jwtSecret ? jwtSecret.length : 0,
+            jwt_secret_preview: maskSecret,
+            env_vars_present: Object.keys(process.env).filter(key => key.includes('JWT')),
+            node_env: process.env.NODE_ENV
+        });
+    } catch (error) {
+        console.error("Error in checkJwtConfig:", error);
+        res.status(500).json({ message: "Error checking JWT configuration" });
+    }
+};
+
 module.exports = {
     register,
     login,
     logout,
     updateUser,
-    deleteUser
+    deleteUser,
+    checkJwtConfig
 }

@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from '../config/axios'
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -22,6 +21,9 @@ export default function RegisterPage() {
     password: "",
     phone: "",
     confirmPassword: "",
+    city: "",
+    pinCode: "",
+    address: "",
   });
 
   const [errors, setErrors] = useState({
@@ -30,6 +32,9 @@ export default function RegisterPage() {
     password: "",
     phone: "",
     confirmPassword: "",
+    city: "",
+    pinCode: "",
+    address: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -68,6 +73,20 @@ export default function RegisterPage() {
       newErrors.confirmPassword = "Please confirm your password";
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required";
+    }
+
+    if (!formData.pinCode.trim()) {
+      newErrors.pinCode = "Pincode is required";
+    } else if (!/^\d{6}$/.test(formData.pinCode)) {
+      newErrors.pinCode = "Pincode must be 6 digits";
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = "Address is required";
     }
 
     setErrors(newErrors);
@@ -118,6 +137,9 @@ export default function RegisterPage() {
         email: formData.email.trim(),
         password: formData.password,
         phone: formData.phone.trim(),
+        city: formData.city.trim(),
+        pincode: formData.pinCode.trim(),
+        address: formData.address.trim()
       });
 
       console.log("Register response:", response);
@@ -169,7 +191,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <ToastContainer />
       <div className="flex w-full max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden">
         {/* Left Side - Text Section */}
         <div className="w-1/2 bg-red-500 text-white flex flex-col items-center justify-center p-10">
@@ -216,17 +237,33 @@ export default function RegisterPage() {
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
             </div>
-            <div>
-              <input
-                type="password"
-                name="password"
-                placeholder="Password"
-                className={`w-full p-2 border rounded ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
-                value={formData.password}
-                onChange={handleInputChange}
-              />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            
+            {/* Password and Confirm Password side by side */}
+            <div className="flex space-x-4">
+              <div className="w-1/2">
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Password"
+                  className={`w-full p-2 border rounded ${errors.password ? 'border-red-500' : 'border-gray-300'}`}
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+                {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+              </div>
+              <div className="w-1/2">
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm Password"
+                  className={`w-full p-2 border rounded ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                />
+                {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+              </div>
             </div>
+            
             <div>
               <input
                 type="text"
@@ -238,16 +275,39 @@ export default function RegisterPage() {
               />
               {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
             </div>
+            
             <div>
               <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                className={`w-full p-2 border rounded ${errors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`}
-                value={formData.confirmPassword}
+                type="text"
+                name="city"
+                placeholder="City"
+                className={`w-full p-2 border rounded ${errors.city ? 'border-red-500' : 'border-gray-300'}`}
+                value={formData.city}
                 onChange={handleInputChange}
               />
-              {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+              {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
+            </div>
+            <div>
+              <input
+                type="text"
+                name="pinCode"
+                placeholder="Pincode"
+                className={`w-full p-2 border rounded ${errors.pinCode ? 'border-red-500' : 'border-gray-300'}`}
+                value={formData.pinCode}
+                onChange={handleInputChange}
+              />
+              {errors.pinCode && <p className="text-red-500 text-sm mt-1">{errors.pinCode}</p>}
+            </div>
+            <div>
+              <input
+                type="text"
+                name="address"
+                placeholder="Address"
+                className={`w-full p-2 border rounded ${errors.address ? 'border-red-500' : 'border-gray-300'}`}
+                value={formData.address}
+                onChange={handleInputChange}
+              />
+              {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
             </div>
             <button
               type="submit"

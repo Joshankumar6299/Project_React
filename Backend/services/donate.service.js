@@ -1,4 +1,5 @@
 const donateModel = require('../models/donateModel.js')
+const userModel = require('../models/userModel.js')
 const mongoose = require('mongoose')
 
 // Create a new donation
@@ -65,6 +66,30 @@ const createDonation = async (data) => {
         console.log('Donation created successfully with ID:', newDonate._id.toString());
         console.log('User associated with donation:', newDonate.user ? newDonate.user.toString() : 'Anonymous');
         
+        // Update user model if there is a user associated with the donation
+        if (newDonate.user) {
+            try {
+                // Update user with the new donation reference and increment totalDonations
+                const updatedUser = await userModel.findByIdAndUpdate(
+                    newDonate.user,
+                    {
+                        $push: { donations: newDonate._id },
+                        $inc: { totalDonations: 1 }
+                    },
+                    { new: true }
+                );
+                
+                if (updatedUser) {
+                    console.log(`User ${updatedUser._id} updated with donation ${newDonate._id} - Total donations: ${updatedUser.totalDonations}`);
+                } else {
+                    console.warn(`User ${newDonate.user} not found when updating donation reference`);
+                }
+            } catch (updateError) {
+                console.error('Error updating user with donation reference:', updateError);
+                // We don't throw here to avoid failing the donation if user update fails
+            }
+        }
+        
         return newDonate;
     } catch (error) {
         console.error("❌ Error creating donation:", error);
@@ -92,7 +117,7 @@ const createDonation = async (data) => {
 const getAllDonations = async () => {
     try {
         const donations = await donateModel.find()
-            .populate('user', 'name email') // Populate user details
+            .populate('user', 'fullname email') // Populate user details
             .sort({ createdAt: -1 }); // Most recent first
         return donations;
     } catch (error) {
@@ -108,8 +133,27 @@ const getDonationsByUser = async (userId) => {
             throw new Error("Invalid user ID format");
         }
         
-        const donations = await donateModel.find({ user: userId })
-            .sort({ createdAt: -1 }); // Most recent first
+        console.log("Looking for donations with user ID:", userId.toString());
+        
+        // First fetch the user to get their email
+        const user = await userModel.findById(userId);
+        
+        if (!user) {
+            console.error("User not found in database:", userId.toString());
+            throw new Error("User not found");
+        }
+        
+        console.log("Found user, email:", user.email);
+        
+        // Find donations by both user ID and email to catch all possible donations
+        const donations = await donateModel.find({
+            $or: [
+                { user: userId },                 // Donations linked by user ID
+                { email: user.email }             // Donations matched by email
+            ]
+        }).sort({ createdAt: -1 });               // Sort by most recent first
+        
+        console.log(`Found ${donations.length} total donations for user ${userId.toString()}`);
         return donations;
     } catch (error) {
         console.error("Error retrieving user donations:", error);

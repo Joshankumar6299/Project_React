@@ -134,17 +134,39 @@ const getAllDonations = asyncHandler(async(req, res) => {
 
 // Get user donations
 const getUserDonations = asyncHandler(async(req, res) => {
-    const userId = req.user?._id;
-    
-    if (!userId) throw new ApiError(401, "Authentication required");
-    
-    const donations = await getDonationsByUserService(userId);
-    
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, "User donations retrieved successfully", donations)
-    )
+    try {
+        const userId = req.user?._id;
+        
+        if (!userId) {
+            console.error("getUserDonations - No user ID available in request:", req.user);
+            throw new ApiError(401, "Authentication required");
+        }
+        
+        console.log("Fetching donations for user ID:", userId.toString());
+        
+        // Get donations directly linked to this user
+        const donations = await getDonationsByUserService(userId);
+        console.log(`Found ${donations.length} donations for user ${userId.toString()}`);
+        
+        return res
+        .status(200)
+        .json(
+            new ApiResponse(200, "User donations retrieved successfully", donations)
+        );
+    } catch (error) {
+        console.error("Error in getUserDonations controller:", error);
+        
+        if (error.name === 'CastError') {
+            return res.status(400).json(
+                new ApiResponse(400, "Invalid user ID format", null)
+            );
+        }
+        
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json(
+            new ApiResponse(statusCode, error.message || "Error retrieving user donations", null)
+        );
+    }
 });
 
 // Update donation status
