@@ -1,14 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bar, Pie } from "react-chartjs-2";
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend } from "chart.js";
-import TotalUser from "./totalUser";
-import TotalDonor from "./totalDonar";
-import Profile from "./profile";
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+// import TotalUser from "./totalUser";
+// import TotalDonor from "./totalDonar";
+import Profile from "./Profile";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, ArcElement, Tooltip, Legend);
 
 const Dashboard = () => {
   const [activePage, setActivePage] = useState("Dashboard");
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Check authentication on component mount
+  useEffect(() => {
+    // Check if the user is authenticated
+    const token = localStorage.getItem('accessToken');
+    console.log("Dashboard - Token found:", !!token);
+    
+    if (!token) {
+      console.log("Dashboard - No token found, redirecting to login");
+      toast.error("Authentication required. Please login.");
+      navigate('/login', { state: { from: '/dashboard' } });
+      return;
+    }
+    
+    // Set loading to false since we have a token
+    setIsLoading(false);
+  }, [navigate]);
 
   // Data for Bar Chart
   const barData = {
@@ -33,8 +55,82 @@ const Dashboard = () => {
     ],
   };
 
+  // Handle logout
+  const handleLogout = () => {
+    // Clear all tokens and user data from local storage
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    
+    // Show logout success message
+    toast.success("Logged out successfully!", {
+      position: "top-right",
+      autoClose: 2000,
+    });
+    
+    // Use replace for a clean navigation
+    setTimeout(() => {
+      window.location.replace('/');
+    }, 1000);
+  };
+
+  // Placeholder components for Total User and Total Donor
+  const TotalUser = () => (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4">Total Users</h2>
+      <p className="text-gray-600">
+        This is a placeholder for the Total User component. The actual component will be implemented later.
+      </p>
+      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+        <h3 className="font-semibold text-lg mb-2">User Statistics</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-3 rounded shadow">
+            <p className="text-sm text-gray-500">Total Registered</p>
+            <p className="text-xl font-bold">1,245</p>
+          </div>
+          <div className="bg-white p-3 rounded shadow">
+            <p className="text-sm text-gray-500">Active Users</p>
+            <p className="text-xl font-bold">987</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const TotalDonor = () => (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4">Total Donors</h2>
+      <p className="text-gray-600">
+        This is a placeholder for the Total Donor component. The actual component will be implemented later.
+      </p>
+      <div className="mt-4 p-4 bg-green-50 rounded-lg">
+        <h3 className="font-semibold text-lg mb-2">Donor Statistics</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-3 rounded shadow">
+            <p className="text-sm text-gray-500">Total Donors</p>
+            <p className="text-xl font-bold">568</p>
+          </div>
+          <div className="bg-white p-3 rounded shadow">
+            <p className="text-sm text-gray-500">Active Donors</p>
+            <p className="text-xl font-bold">432</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen">
+      <ToastContainer />
       {/* Sidebar */}
       <div className="w-1/4 bg-blue-700 text-white flex flex-col">
         <div className="p-6 text-center">
@@ -58,7 +154,10 @@ const Dashboard = () => {
           </ul>
         </nav>
         <div className="p-4">
-          <button className="w-full bg-blue-500 text-white py-2 rounded-md hover:bg-blue-600">
+          <button 
+            onClick={handleLogout}
+            className="w-full bg-red-500 text-white py-2 rounded-md hover:bg-red-600"
+          >
             Logout
           </button>
         </div>
