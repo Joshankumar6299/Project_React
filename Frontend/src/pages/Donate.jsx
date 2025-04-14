@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import "../index.css";
 import img from '../assets/img/donate.jpg';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 // Add CSS to hide the number input spinners
 const styles = {
@@ -33,17 +34,65 @@ const images = [
   
 
 const Donate = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userId, setUserId] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     foodType: '',
     phone: '',
     address: '',
-    quantity: ''
+    quantity: '',
+    notes: ''
   });
   
   const [phoneError, setPhoneError] = useState('');
   const [quantityError, setQuantityError] = useState('');
+
+  // Check if user is logged in and get user data
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const userString = localStorage.getItem('user');
+      
+      console.log('User string from localStorage:', userString);
+      
+      let userData = null;
+      try {
+        userData = userString ? JSON.parse(userString) : null;
+      } catch (err) {
+        console.error('Error parsing user data:', err);
+      }
+      
+      console.log('Parsed user data:', userData);
+      
+      setIsLoggedIn(!!token);
+      
+      // Make sure we have a valid user ID
+      if (userData && userData._id) {
+        setUserId(userData._id);
+        console.log('Setting user ID from localStorage:', userData._id);
+        
+        // Display toast to confirm user is logged in
+        toast.info(`Logged in as ${userData.name || 'user'}`);
+      } else {
+        console.log('No valid user ID found in localStorage');
+      }
+      
+      // If logged in, pre-fill some fields
+      if (userData) {
+        setFormData(prev => ({
+          ...prev,
+          name: userData.name || prev.name,
+          email: userData.email || prev.email,
+          phone: userData.phone || prev.phone
+        }));
+      }
+    } catch (err) {
+      console.error('Error in useEffect:', err);
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -90,41 +139,223 @@ const Donate = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Display immediate toast to show the form submission started
+    const loadingToastId = toast.loading("Submitting donation...");
+    
+    // Reset previous errors
+    setPhoneError('');
+    setQuantityError('');
+    
     // Validate required fields
-    if (!formData.name || !formData.email || !formData.foodType || !formData.phone || !formData.address || !formData.quantity) {
-      toast.error('Please fill all required fields');
+    const errors = [];
+    if (!formData.name) errors.push('Name is required');
+    if (!formData.email) errors.push('Email is required');
+    if (!formData.foodType) errors.push('Food type is required');
+    if (!formData.phone) errors.push('Phone number is required');
+    if (!formData.address) errors.push('Address is required');
+    if (!formData.quantity) errors.push('Quantity is required');
+    
+    // Display all validation errors at once if there are any
+    if (errors.length > 0) {
+      toast.update(loadingToastId, { 
+        render: errors.join(', '), 
+        type: "error", 
+        isLoading: false, 
+        autoClose: 5000 
+      });
+      return;
+    }
+    
+    // Validate email format
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(formData.email)) {
+      toast.update(loadingToastId, { 
+        render: 'Please enter a valid email address', 
+        type: "error", 
+        isLoading: false, 
+        autoClose: 5000 
+      });
       return;
     }
     
     // Validate phone number
     if (formData.phone.length !== 10) {
       setPhoneError('Phone number must be 10 digits');
+      toast.update(loadingToastId, { 
+        render: 'Phone number must be 10 digits', 
+        type: "error", 
+        isLoading: false, 
+        autoClose: 5000 
+      });
       return;
     }
     
     // Validate quantity
     if (parseInt(formData.quantity) <= 0) {
       setQuantityError('Quantity must be greater than 0');
+      toast.update(loadingToastId, { 
+        render: 'Quantity must be greater than 0', 
+        type: "error", 
+        isLoading: false, 
+        autoClose: 5000 
+      });
       return;
     }
     
-    // Here you would make an API call to submit the form
-    console.log('Donation submitted:', formData);
-    
-    toast.success('Thank you for your donation! We will contact you soon.');
-    
-    // Reset form after successful submission
-    setFormData({
-      name: '',
-      email: '',
-      foodType: '',
-      phone: '',
-      address: '',
-      quantity: ''
-    });
+    try {
+      setIsSubmitting(true);
+      
+      // Get the most current user ID directly from localStorage
+      let currentUserId = null;
+      try {
+        const userString = localStorage.getItem('user');
+        if (userString) {
+          const userData = JSON.parse(userString);
+          currentUserId = userData._id;
+        }
+      } catch (err) {
+        console.error('Error getting user ID from localStorage:', err);
+      }
+      
+      console.log('Current user ID for donation:', currentUserId || 'Not available');
+      
+      // Prepare data for backend
+      const backendData = {
+        fullname: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        foodType: formData.foodType,
+        fullAddress: formData.address.trim(),
+        foodQuantity: formData.quantity.trim(),
+        notes: formData.notes.trim()
+      };
+      
+      // Add user ID if it exists
+      if (currentUserId) {
+        backendData.user = currentUserId;
+        console.log('Adding user ID to donation data:', currentUserId);
+      } else if (userId) {
+        backendData.user = userId;
+        console.log('Using user ID from state:', userId);
+      } else {
+        console.log('No user ID available, donation will be anonymous');
+      }
+      
+      // Add authorization header if logged in
+      const config = {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      };
+      
+      if (isLoggedIn) {
+        const token = localStorage.getItem('accessToken');
+        console.log('Using token for auth:', token ? 'yes' : 'no');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      }
+      
+      console.log('Sending data to backend:', JSON.stringify(backendData));
+      
+      // Add baseURL explicitly in case it's missing in axios instance
+      const baseURL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+      const apiURL = `${baseURL}/donate/donate`;
+      console.log('Making API request to:', apiURL);
+      
+      try {
+        // Make API call to backend with explicit URL
+        const response = await axios.post(apiURL, backendData, config);
+        
+        console.log('Donation submitted successfully:', response.data);
+        
+        // Show success message with donation ID for reference
+        const donationId = response.data?.data?._id || '';
+        toast.update(loadingToastId, { 
+          render: `Thank you for your donation! Reference ID: ${donationId.substring(0, 8)}`, 
+          type: "success", 
+          isLoading: false, 
+          autoClose: 5000 
+        });
+        
+        // Reset form after successful submission
+        setFormData({
+          name: '',
+          email: '',
+          foodType: '',
+          phone: '',
+          address: '',
+          quantity: '',
+          notes: ''
+        });
+      } catch (error) {
+        console.error('Error submitting donation:', error);
+        
+        // Handle different types of errors
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          // that falls out of the range of 2xx
+          console.error('Error response:', error.response.data);
+          
+          // Try to extract the most specific error message
+          let errorMessage;
+          if (error.response.data?.message) {
+            errorMessage = error.response.data.message;
+          } else if (error.response.data?.error) {
+            errorMessage = error.response.data.error;
+          } else if (typeof error.response.data === 'string') {
+            errorMessage = error.response.data;
+          } else {
+            errorMessage = `Server error (${error.response.status})`;
+          }
+          
+          toast.update(loadingToastId, { 
+            render: errorMessage, 
+            type: "error", 
+            isLoading: false, 
+            autoClose: 5000 
+          });
+          
+          // Log detailed error information for debugging
+          console.error('Error details:', {
+            status: error.response.status,
+            data: error.response.data,
+            headers: error.response.headers
+          });
+        } else if (error.request) {
+          // The request was made but no response was received
+          toast.update(loadingToastId, { 
+            render: 'No response from server. Please check your internet connection.', 
+            type: "error", 
+            isLoading: false, 
+            autoClose: 5000 
+          });
+          console.error('No response received:', error.request);
+        } else {
+          // Something happened in setting up the request that triggered an Error
+          toast.update(loadingToastId, { 
+            render: 'An error occurred while setting up the request', 
+            type: "error", 
+            isLoading: false, 
+            autoClose: 5000 
+          });
+          console.error('Error setting up request:', error.message);
+        }
+      }
+    } catch (outerError) {
+      console.error('Unexpected error in submission process:', outerError);
+      toast.update(loadingToastId, { 
+        render: 'An unexpected error occurred. Please try again.', 
+        type: "error", 
+        isLoading: false, 
+        autoClose: 5000 
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -245,8 +476,21 @@ const Donate = () => {
             )}
           </div>
           
-          <button type="submit" className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">
-            Donate
+          <textarea
+            placeholder="Additional notes (optional)"
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            className="w-full p-3 border rounded-lg outline-none focus:border-blue-500 resize-none"
+            rows="3"
+          />
+          
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className={`w-full ${isSubmitting ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-700'} text-white p-3 rounded-lg transition-colors duration-300`}
+          >
+            {isSubmitting ? 'Submitting...' : 'Donate'}
           </button>
         </form>
       </div>
