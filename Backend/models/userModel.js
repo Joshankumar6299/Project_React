@@ -35,6 +35,14 @@ const userSchema = new mongoose.Schema({
         required: true,
         unique: true,
     },
+    totalDonations: {
+        type: Number,
+        default: 0,
+    },
+    donations: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Donation',
+    }],
 });
 
 userSchema.pre('save', async function (next) {
