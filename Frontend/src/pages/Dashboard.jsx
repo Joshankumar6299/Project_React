@@ -163,43 +163,6 @@ const Dashboard = () => {
       console.log('Attempting to fetch donations from /donate/user');
       setIsLoading(true); // Set loading state to true while fetching
       
-      // Add a check for mock data when server is unavailable for development purposes
-      if (process.env.NODE_ENV === 'development' && localStorage.getItem('useMockData') === 'true') {
-        console.log('Using mock donation data for development');
-        // Sample mock data that matches the donateModel schema
-        const mockData = [
-          {
-            _id: 'mock1',
-            fullname: 'Test User',
-            email: 'test@example.com',
-            phone: '1234567890',
-            foodType: 'veg',
-            fullAddress: '123 Test Street, Test City',
-            foodQuantity: '2',
-            status: 'pending',
-            donationDate: new Date().toISOString(),
-            notes: ''
-          },
-          {
-            _id: 'mock2',
-            fullname: 'Test User 2',
-            email: 'test2@example.com',
-            phone: '0987654321',
-            foodType: 'non-veg',
-            fullAddress: '456 Sample Road, Example Town',
-            foodQuantity: '3',
-            status: 'accepted',
-            donationDate: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-            notes: 'Will deliver personally'
-          }
-        ];
-        
-        setDonations(mockData);
-        setFilteredDonations(mockData);
-        setIsLoading(false);
-        return;
-      }
-      
       const response = await axios.get('/donate/user');
       console.log('Donation response received:', response);
       
@@ -335,47 +298,8 @@ const Dashboard = () => {
       } else if (error.request) {
         console.error('Network error - No response received:', error.request);
         
-        // If in development mode, enable mock data for future requests
-        if (process.env.NODE_ENV === 'development') {
-          localStorage.setItem('useMockData', 'true');
-          
-          // Only show warning toast once
-          if (!hasShownNetworkError) {
-            toast.warning('Could not connect to server. Using sample data for display purposes.');
-            setHasShownNetworkError(true);
-          }
-          
-          // Add sample mock data matching donateModel schema
-          const mockData = [
-            {
-              _id: 'mock1',
-              fullname: 'Test User',
-              email: 'test@example.com',
-              phone: '1234567890',
-              foodType: 'veg',
-              fullAddress: '123 Test Street, Test City',
-              foodQuantity: '2',
-              status: 'pending',
-              donationDate: new Date().toISOString(),
-              notes: ''
-            },
-            {
-              _id: 'mock2',
-              fullname: 'Test User 2',
-              email: 'test2@example.com',
-              phone: '0987654321',
-              foodType: 'non-veg',
-              fullAddress: '456 Sample Road, Example Town',
-              foodQuantity: '3',
-              status: 'accepted',
-              donationDate: new Date(Date.now() - 86400000).toISOString(),
-              notes: 'Will deliver personally'
-            }
-          ];
-          
-          setDonations(mockData);
-          setFilteredDonations(mockData);
-        } else if (!hasShownNetworkError) {
+        // Only show error toast once
+        if (!hasShownNetworkError) {
           toast.error('Failed to connect to the server. Please check your network connection or try again later.');
           setHasShownNetworkError(true);
         }
