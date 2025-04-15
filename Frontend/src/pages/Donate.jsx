@@ -275,15 +275,7 @@ const Donate = () => {
       console.log('Donation response:', response);
       
       if (response.data && response.data.statusCode === 200) {
-        // Update loading toast to success
-        toast.update(loadingToastId, {
-          render: response.data.message || "Donation submitted successfully!",
-          type: "success",
-          isLoading: false,
-          autoClose: 3000
-        });
-        
-        // Reset form
+        // First immediately clear the form data
         setFormData({
           name: '',
           email: '',
@@ -294,10 +286,30 @@ const Donate = () => {
           notes: ''
         });
         
-        // Redirect to dashboard after a short delay
+        // Also clear any error states
+        setPhoneError('');
+        setQuantityError('');
+        
+        // Reset form fields programmatically
+        document.getElementById('donationForm').reset();
+        
+        // Then show success toast
+        toast.success("Donation created successfully! Thank you for your contribution.", {
+          position: "top-center",
+          autoClose: 5000, // Keep it visible for 5 seconds
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+        });
+        
+        // Dismiss the loading toast separately
+        toast.dismiss(loadingToastId);
+        
+        // Redirect to dashboard after a longer delay to ensure toast is visible and form is cleared
         setTimeout(() => {
           window.location.replace('/dashboard');
-        }, 2000);
+        }, 3000);
       } else {
         // Handle unexpected response format
         toast.update(loadingToastId, {
@@ -413,7 +425,7 @@ const Donate = () => {
           </div>
         )}
 
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form id="donationForm" className="space-y-4" onSubmit={handleSubmit}>
           <input 
             type="text" 
             placeholder="Name" 

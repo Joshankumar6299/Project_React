@@ -108,7 +108,7 @@ const deleteUser = asyncHandler(async (req, res) => {
 // Debug function to check JWT settings - REMOVE IN PRODUCTION
 const checkJwtConfig = async(req, res) => {
     try {
-        const jwtSecret = process.env.JWT_SECRET;
+        const jwtSecret = process.env.JWT_ACCESS_SECRET; // Updated to check for JWT_ACCESS_SECRET
         const maskSecret = jwtSecret ? `${jwtSecret.substring(0, 3)}...` : null;
         
         res.status(200).json({
@@ -125,11 +125,37 @@ const checkJwtConfig = async(req, res) => {
     }
 };
 
+// Get User Profile function
+const getUserProfile = asyncHandler(async (req, res) => {
+    try {
+        // req.user comes from the auth middleware
+        const user = req.user;
+        
+        if (!user) {
+            throw new ApiError(401, "User not authenticated");
+        }
+        
+        // Don't send password in response
+        user.password = undefined;
+        
+        // Check if user has donations (assuming user model has donations field)
+        let userData = user.toObject();
+        
+        // Return the profile data
+        return res.status(200).json(
+            new ApiResponse(200, "User profile retrieved successfully", userData)
+        );
+    } catch (error) {
+        throw new ApiError(500, "Error retrieving user profile: " + error.message);
+    }
+});
+
 module.exports = {
     register,
     login,
     logout,
     updateUser,
     deleteUser,
-    checkJwtConfig
+    checkJwtConfig,
+    getUserProfile
 }

@@ -185,9 +185,245 @@ const updateDonationStatus = async (donationId, status) => {
     }
 };
 
+// Get donation by ID
+const getDonationById = async (donationId) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(donationId)) {
+            throw new Error("Invalid donation ID format");
+        }
+        
+        const donation = await donateModel.findById(donationId)
+            .populate('user', 'fullname email'); // Populate user details if available
+            
+        if (!donation) {
+            throw new Error("Donation not found");
+        }
+        
+        return donation;
+    } catch (error) {
+        console.error("Error retrieving donation:", error);
+        throw error;
+    }
+};
+
+// Get donations by status
+const getDonationsByStatus = async (status) => {
+    try {
+        // Validate status against the enum values in the model
+        const validStatuses = ['pending', 'accepted', 'completed', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            throw new Error("Invalid status. Must be one of: pending, accepted, completed, cancelled");
+        }
+        
+        const donations = await donateModel.find({ status })
+            .populate('user', 'fullname email')
+            .sort({ createdAt: -1 });
+            
+        console.log(`Found ${donations.length} donations with status "${status}"`);
+        return donations;
+    } catch (error) {
+        console.error(`Error retrieving donations with status ${status}:`, error);
+        throw error;
+    }
+};
+
+// Get donations by date range
+const getDonationsByDateRange = async (startDate, endDate) => {
+    try {
+        // Convert string dates to Date objects if they're not already
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        // Validate dates
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+            throw new Error("Invalid date format. Please use YYYY-MM-DD format");
+        }
+        
+        // Set end date to end of day for inclusive search
+        end.setHours(23, 59, 59, 999);
+        
+        console.log(`Searching for donations between ${start.toISOString()} and ${end.toISOString()}`);
+        
+        // Use $or to search in both donationDate and createdAt fields
+        const donations = await donateModel.find({
+            $or: [
+                { donationDate: { $gte: start, $lte: end } },
+                { createdAt: { $gte: start, $lte: end } }
+            ]
+        })
+        .populate('user', 'fullname email')
+        .sort({ donationDate: -1 });
+        
+        console.log(`Found ${donations.length} donations in date range`);
+        return donations;
+    } catch (error) {
+        console.error("Error retrieving donations by date range:", error);
+        throw error;
+    }
+};
+
+// Get donations by food type
+const getDonationsByFoodType = async (foodType) => {
+    try {
+        // Validate food type against the enum values in the model
+        const validFoodTypes = ['veg', 'non-veg', 'both'];
+        if (!validFoodTypes.includes(foodType)) {
+            throw new Error("Invalid food type. Must be one of: veg, non-veg, both");
+        }
+        
+        const donations = await donateModel.find({ foodType })
+            .populate('user', 'fullname email')
+            .sort({ createdAt: -1 });
+            
+        console.log(`Found ${donations.length} donations with food type "${foodType}"`);
+        return donations;
+    } catch (error) {
+        console.error(`Error retrieving donations with food type ${foodType}:`, error);
+        throw error;
+    }
+};
+
+// Add notes to a donation
+const addNotesToDonation = async (donationId, notes) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(donationId)) {
+            throw new Error("Invalid donation ID format");
+        }
+        
+        if (!notes || typeof notes !== 'string' || notes.trim() === '') {
+            throw new Error("Notes cannot be empty");
+        }
+        
+        const updatedDonation = await donateModel.findByIdAndUpdate(
+            donationId,
+            { notes },
+            { new: true, runValidators: true }
+        );
+        
+        if (!updatedDonation) {
+            throw new Error("Donation not found");
+        }
+        
+        console.log(`Added notes to donation ${donationId}`);
+        return updatedDonation;
+    } catch (error) {
+        console.error("Error adding notes to donation:", error);
+        throw error;
+    }
+};
+
+// Get donation statistics
+const getDonationStatistics = async () => {
+    try {
+        // Get count by status
+        const statusCounts = await donateModel.aggregate([
+            {
+                $group: {
+                    _id: "$status",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+        
+        // Get count by food type
+        const foodTypeCounts = await donateModel.aggregate([
+            {
+                $group: {
+                    _id: "$foodType",
+                    count: { $sum: 1 }
+                }
+            }
+        ]);
+        
+        // Get donations by date (last 7 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        
+        // Make sure we have created_at field by using $ifNull to fallback to donationDate if needed
+        const recentDonations = await donateModel.aggregate([
+            {
+                $match: {
+                    $or: [
+                        { createdAt: { $gte: sevenDaysAgo } },
+                        { donationDate: { $gte: sevenDaysAgo } }
+                    ]
+                }
+            },
+            {
+                $addFields: {
+                    // Use createdAt if available, otherwise fall back to donationDate
+                    dateField: { $ifNull: ["$createdAt", "$donationDate"] }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        year: { $year: "$dateField" },
+                        month: { $month: "$dateField" },
+                        day: { $dayOfMonth: "$dateField" }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $sort: { "_id.year": 1, "_id.month": 1, "_id.day": 1 }
+            }
+        ]);
+        
+        // Format the results into a more usable structure
+        const statusStats = statusCounts.reduce((acc, curr) => {
+            if (curr._id) { // Make sure _id is not null
+                acc[curr._id] = curr.count;
+            }
+            return acc;
+        }, {});
+        
+        const foodTypeStats = foodTypeCounts.reduce((acc, curr) => {
+            if (curr._id) { // Make sure _id is not null
+                acc[curr._id] = curr.count;
+            }
+            return acc;
+        }, {});
+        
+        const dailyDonations = recentDonations.map(item => {
+            // Handle any potentially missing fields
+            const year = item._id?.year || new Date().getFullYear();
+            const month = item._id?.month || new Date().getMonth() + 1;
+            const day = item._id?.day || new Date().getDate();
+            
+            return {
+                date: `${year}-${month}-${day}`,
+                count: item.count || 0
+            };
+        });
+        
+        return {
+            totalDonations: await donateModel.countDocuments(),
+            byStatus: statusStats,
+            byFoodType: foodTypeStats,
+            recentDonations: dailyDonations
+        };
+    } catch (error) {
+        console.error("Error generating donation statistics:", error);
+        // Return a basic statistics object instead of throwing
+        return {
+            totalDonations: await donateModel.countDocuments().catch(() => 0),
+            byStatus: {},
+            byFoodType: {},
+            recentDonations: []
+        };
+    }
+};
+
 module.exports = {
     createDonation,
     getAllDonations,
     getDonationsByUser,
-    updateDonationStatus
+    updateDonationStatus,
+    getDonationById,
+    getDonationsByStatus,
+    getDonationsByDateRange,
+    getDonationsByFoodType,
+    addNotesToDonation,
+    getDonationStatistics
 };

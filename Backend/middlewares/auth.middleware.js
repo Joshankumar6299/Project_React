@@ -34,27 +34,28 @@ const auth = asyncHandler(async (req, res, next) => {
         
         console.log('Attempting to verify token...');
         
-        // Check if JWT_SECRET exists
-        const jwtSecret = process.env.JWT_SECRET;
+        // Check if JWT_ACCESS_SECRET exists (updated from JWT_SECRET)
+        const jwtSecret = process.env.JWT_ACCESS_SECRET;
         if (!jwtSecret) {
-            console.error('JWT_SECRET environment variable is missing or empty');
+            console.error('JWT_ACCESS_SECRET environment variable is missing or empty');
             throw new ApiError(500, 'Server configuration error');
         }
         
         try {
             // Verify token - wrapped in try/catch to handle JWT-specific errors
             const decoded = jwt.verify(token, jwtSecret);
-            console.log('Token verified, user id:', decoded._id);
+            console.log('Token verified, user id:', decoded.userId || decoded._id);
             
-            // Find user by id
-            const user = await User.findById(decoded._id);
+            // Find user by id (handle both formats: userId or _id)
+            const userId = decoded.userId || decoded._id;
+            const user = await User.findById(userId);
             
             if (!user) {
-                console.log('User not found in database for id:', decoded._id);
+                console.log('User not found in database for id:', userId);
                 throw new ApiError(401, 'User not found');
             }
             
-            console.log('User authenticated successfully:', user.name || user.email);
+            console.log('User authenticated successfully:', user.fullname || user.email);
             
             // Attach user to request
             req.user = user;
