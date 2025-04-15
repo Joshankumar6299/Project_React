@@ -422,14 +422,72 @@ const Dashboard = () => {
 
   const getDonationDetails = async (donationId) => {
     try {
+      setIsLoading(true);
       const response = await axios.get(`/donate/id/${donationId}`);
-      if (response.data && response.data.success) {
-        setSelectedDonation(response.data.data);
-        setDonationNotes(response.data.data.notes || "");
+      console.log('Donation details response:', response);
+      
+      let donationData = null;
+      
+      // Check all possible data structures in the response
+      if (response.data) {
+        if (response.data.data) {
+          // Standard API structure
+          donationData = response.data.data;
+          console.log('Found donation details in response.data.data');
+        } else if (response.data.message && typeof response.data.message === 'object') {
+          // Alternative API structure with message object
+          donationData = response.data.message;
+          console.log('Found donation details in response.data.message');
+        } else if (Array.isArray(response.data.message) && response.data.message.length > 0) {
+          // Array structure in message
+          donationData = response.data.message[0];
+          console.log('Found donation details in response.data.message array');
+        }
+      }
+      
+      if (donationData) {
+        console.log('Setting donation details:', donationData);
+        setSelectedDonation(donationData);
+        setDonationNotes(donationData.notes || "");
+        
+        // Fetch user details if user ID is available and we're admin
+        if (isAdmin && donationData.user) {
+          try {
+            const userResponse = await axios.get(`/user/profile?id=${donationData.user}`);
+            if (userResponse.data && userResponse.data.success) {
+              // Merge user details with donation data
+              const userDetails = userResponse.data.data || userResponse.data.message;
+              setSelectedDonation(prev => ({
+                ...prev,
+                userDetails: userDetails
+              }));
+              console.log('Added user details to donation:', userDetails);
+            }
+          } catch (userError) {
+            console.error('Error fetching user details:', userError);
+            // Continue showing donation details even if user details fail
+          }
+        }
+        
+        toast.success("Donation details loaded");
+      } else {
+        console.warn('No donation data found in response');
+        toast.warning("Could not find donation details in server response");
       }
     } catch (error) {
       console.error('Error fetching donation details:', error);
-      toast.error("Failed to fetch donation details");
+      
+      if (error.response) {
+        const statusCode = error.response.status;
+        const errorMessage = error.response.data?.message || `Server error (${statusCode})`;
+        toast.error(`Failed to fetch donation details: ${errorMessage}`);
+      } else if (error.request) {
+        toast.error("Network error: Failed to connect to the server");
+      } else {
+        toast.error(`Error: ${error.message}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -694,63 +752,233 @@ const Dashboard = () => {
   
   const DonationDetailView = () => {
     if (!selectedDonation) return null;
+
+    // Format date with fallback for invalid dates
+    const formatDate = (dateString) => {
+      try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+          return 'Invalid date';
+        }
+        return date.toLocaleString();
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return 'Invalid date';
+      }
+    };
     
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white z-10 px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="text-2xl font-bold text-blue-700 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Donation Details
+            </h2>
+            <button 
+              onClick={() => {
+                setSelectedDonation(null);
+                setDonationNotes("");
+                setEditingStatus(false);
+              }}
+              className="text-gray-500 hover:text-gray-800"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          
           <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Donation Details</h2>
-              <button 
-                onClick={() => {
-                  setSelectedDonation(null);
-                  setDonationNotes("");
-                  setEditingStatus(false);
-                }}
-                className="text-gray-500 hover:text-gray-800"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Donor Information</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-500">Full Name</p>
-                    <p className="font-medium">{selectedDonation.fullname}</p>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* User Information Panel */}
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-5 shadow-md">
+                <h3 className="text-lg font-semibold mb-4 text-blue-800 flex items-center border-b border-blue-200 pb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                  </svg>
+                  User Information
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Full Name</p>
+                    <p className="font-medium text-gray-800">{selectedDonation.fullname || 'Not provided'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{selectedDonation.email}</p>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Email</p>
+                    <p className="font-medium text-gray-800 break-words">{selectedDonation.email || 'Not provided'}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Phone</p>
-                    <p className="font-medium">{selectedDonation.phone}</p>
+                  
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Phone</p>
+                    <p className="font-medium text-gray-800">
+                      {selectedDonation.phone ? (
+                        <a href={`tel:${selectedDonation.phone}`} className="hover:text-blue-600">
+                          {selectedDonation.phone}
+                        </a>
+                      ) : 'Not provided'}
+                    </p>
                   </div>
+
+                  {selectedDonation.user && (
+                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                      <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Donor Type</p>
+                      <p className="font-medium text-gray-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="h-2 w-2 rounded-full bg-blue-600 mr-1"></span>
+                          Registered User
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                  
+                  {!selectedDonation.user && (
+                    <div className="bg-white rounded-lg p-3 shadow-sm">
+                      <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Donor Type</p>
+                      <p className="font-medium text-gray-800">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          Anonymous Donor
+                        </span>
+                      </p>
+                    </div>
+                  )}
                 </div>
+                
+                <div className="mt-4 bg-white rounded-lg p-4 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-700 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <p className="text-sm font-medium text-gray-700">Delivery Address</p>
+                  </div>
+                  <p className="text-gray-800 bg-blue-50 p-2 rounded">{selectedDonation.fullAddress || 'Not provided'}</p>
+                </div>
+
+                {selectedDonation.user && isAdmin && (
+                  <div className="mt-4 text-center">
+                    <button 
+                      className="text-sm text-blue-600 hover:text-blue-800 flex items-center justify-center mx-auto"
+                      onClick={() => navigate(`/profile?id=${selectedDonation.user}`)}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                        <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                      </svg>
+                      View Complete User Profile
+                    </button>
+                  </div>
+                )}
+
+                {selectedDonation.user && selectedDonation.userDetails && (
+                  <div className="mt-4 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h4 className="font-medium text-blue-800 mb-2 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z" />
+                      </svg>
+                      Additional User Information
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {selectedDonation.userDetails.totalDonations && (
+                        <div>
+                          <span className="text-gray-600">Total Donations:</span>
+                          <span className="ml-1 font-medium">{selectedDonation.userDetails.totalDonations}</span>
+                        </div>
+                      )}
+                      {selectedDonation.userDetails.address && (
+                        <div>
+                          <span className="text-gray-600">Address:</span>
+                          <span className="ml-1">{selectedDonation.userDetails.address}</span>
+                        </div>
+                      )}
+                      {selectedDonation.userDetails.city && (
+                        <div>
+                          <span className="text-gray-600">City:</span>
+                          <span className="ml-1">{selectedDonation.userDetails.city}</span>
+                        </div>
+                      )}
+                      {selectedDonation.userDetails.pinCode && (
+                        <div>
+                          <span className="text-gray-600">Pin Code:</span>
+                          <span className="ml-1">{selectedDonation.userDetails.pinCode}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
               
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Donation Information</h3>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-500">Date</p>
-                    <p className="font-medium">{new Date(selectedDonation.donationDate).toLocaleString()}</p>
+              {/* Donation Information Panel */}
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-5 shadow-md">
+                <h3 className="text-lg font-semibold mb-4 text-green-800 flex items-center border-b border-green-200 pb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM14 11a1 1 0 011 1v1h1a1 1 0 110 2h-1v1a1 1 0 11-2 0v-1h-1a1 1 0 110-2h1v-1a1 1 0 011-1z" />
+                  </svg>
+                  Donation Information
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Donation ID</p>
+                    <p className="font-medium text-xs text-gray-600 truncate">{selectedDonation._id}</p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Food Type</p>
-                    <p className="font-medium capitalize">{selectedDonation.foodType}</p>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Date & Time</p>
+                    <p className="font-medium text-gray-800">
+                      {selectedDonation.donationDate ? new Date(selectedDonation.donationDate).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      }) : 'Not available'}
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      {selectedDonation.donationDate ? new Date(selectedDonation.donationDate).toLocaleTimeString() : ''}
+                    </p>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Quantity</p>
-                    <p className="font-medium">{selectedDonation.foodQuantity} {parseInt(selectedDonation.foodQuantity) > 1 ? 'items' : 'item'}</p>
+                  
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Food Type</p>
+                    <div className="flex items-center">
+                      {selectedDonation.foodType === 'veg' && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                          <span className="h-2 w-2 rounded-full bg-green-600 mr-1"></span>
+                          Vegetarian
+                        </span>
+                      )}
+                      {selectedDonation.foodType === 'non-veg' && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-2">
+                          <span className="h-2 w-2 rounded-full bg-red-600 mr-1"></span>
+                          Non-Vegetarian
+                        </span>
+                      )}
+                      {selectedDonation.foodType === 'both' && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mr-2">
+                          <span className="h-2 w-2 rounded-full bg-yellow-600 mr-1"></span>
+                          Mixed
+                        </span>
+                      )}
+                      {!selectedDonation.foodType && (
+                        <span className="text-gray-600">Not specified</span>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Status</p>
+
+                  <div className="bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Quantity</p>
+                    <p className="font-medium text-gray-800 flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-1 text-green-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      {selectedDonation.foodQuantity ? `${selectedDonation.foodQuantity} ${parseInt(selectedDonation.foodQuantity) > 1 ? 'items' : 'item'}` : 'Not specified'}
+                    </p>
+                  </div>
+
+                  <div className="col-span-2 bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Status</p>
                     {editingStatus ? (
                       <div className="flex items-center space-x-2 mt-1">
                         <select 
@@ -766,74 +994,145 @@ const Dashboard = () => {
                         </select>
                         <button 
                           onClick={updateStatus} 
-                          className="bg-blue-500 text-white px-2 py-1 rounded-md text-sm"
+                          className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
                         >
                           Save
                         </button>
                         <button 
                           onClick={() => setEditingStatus(false)} 
-                          className="bg-gray-300 text-gray-800 px-2 py-1 rounded-md text-sm"
+                          className="bg-gray-300 text-gray-800 px-3 py-1 rounded-md text-sm"
                         >
                           Cancel
                         </button>
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 rounded-full text-sm ${
+                      <div className="flex items-center justify-between">
+                        <span className={`px-3 py-1 rounded-full text-sm ${
                           selectedDonation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
                           selectedDonation.status === 'accepted' ? 'bg-green-100 text-green-800' :
                           selectedDonation.status === 'completed' ? 'bg-blue-100 text-blue-800' :
+                          selectedDonation.status === 'cancelled' ? 'bg-red-100 text-red-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
-                          {selectedDonation.status}
+                          <span className="flex items-center">
+                            <span className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                              selectedDonation.status === 'pending' ? 'bg-yellow-500' :
+                              selectedDonation.status === 'accepted' ? 'bg-green-500' :
+                              selectedDonation.status === 'completed' ? 'bg-blue-500' :
+                              selectedDonation.status === 'cancelled' ? 'bg-red-500' :
+                              'bg-gray-500'
+                            }`}></span>
+                            {selectedDonation.status ? selectedDonation.status.charAt(0).toUpperCase() + selectedDonation.status.slice(1) : 'Unknown'}
+                          </span>
                         </span>
                         {isAdmin && (
                           <button 
                             onClick={() => {
                               setEditingStatus(true);
-                              setNewStatus(selectedDonation.status);
+                              setNewStatus(selectedDonation.status || '');
                             }}
-                            className="text-blue-500 text-sm underline"
+                            className="text-blue-500 text-sm underline hover:text-blue-700"
                           >
-                            Edit
+                            Change Status
                           </button>
                         )}
                       </div>
                     )}
                   </div>
+                  
+                  {/* Timestamps */}
+                  <div className="col-span-2 mt-2 bg-white rounded-lg p-3 shadow-sm">
+                    <p className="text-xs text-gray-500 uppercase mb-1 font-medium">Timestamps</p>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Created:</span>
+                        <span className="ml-1 text-gray-800">
+                          {formatDate(selectedDonation.createdAt || selectedDonation.donationDate)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Updated:</span>
+                        <span className="ml-1 text-gray-800">
+                          {formatDate(selectedDonation.updatedAt || selectedDonation.donationDate)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <div className="mt-6">
-              <h3 className="text-lg font-semibold mb-2">Address</h3>
-              <p className="p-3 bg-gray-50 rounded-md">{selectedDonation.fullAddress}</p>
-            </div>
-            
-            {isAdmin && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Notes</h3>
+            {/* Notes Section */}
+            {isAdmin ? (
+              <div className="mt-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-5 shadow-md">
+                <h3 className="text-lg font-semibold mb-4 text-purple-800 flex items-center border-b border-purple-200 pb-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                  </svg>
+                  Admin Notes
+                </h3>
                 <textarea 
                   value={donationNotes} 
                   onChange={(e) => setDonationNotes(e.target.value)}
-                  className="w-full border border-gray-300 rounded-md p-3 h-32"
+                  className="w-full border border-purple-200 rounded-md p-3 h-32 focus:outline-none focus:ring-2 focus:ring-purple-300"
                   placeholder="Add notes about this donation..."
                 />
                 <button 
                   onClick={addNotesToDonation}
-                  className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                  disabled={!donationNotes.trim()}
+                  className={`mt-3 flex items-center px-4 py-2 rounded-md transition duration-200 ${
+                    donationNotes.trim() 
+                      ? 'bg-purple-600 text-white hover:bg-purple-700' 
+                      : 'bg-purple-300 text-white cursor-not-allowed'
+                  }`}
                 >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h1a2 2 0 012 2v7a2 2 0 01-2 2H8a2 2 0 01-2-2v-7a2 2 0 012-2h1v5.586l-1.293-1.293z" />
+                  </svg>
                   Save Notes
                 </button>
               </div>
+            ) : (
+              selectedDonation.notes && selectedDonation.notes.trim() && (
+                <div className="mt-6 bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-5 shadow-md">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center border-b border-blue-200 pb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clipRule="evenodd" />
+                    </svg>
+                    Notes from Admin
+                  </h3>
+                  <div className="p-4 bg-white rounded-md border border-blue-200 italic whitespace-pre-wrap">
+                    {selectedDonation.notes}
+                  </div>
+                </div>
+              )
             )}
             
-            {!isAdmin && selectedDonation.notes && (
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-2">Notes from Admin</h3>
-                <p className="p-3 bg-blue-50 rounded-md italic">{selectedDonation.notes}</p>
-              </div>
-            )}
+            <div className="mt-6 flex justify-end">
+              {isAdmin && (
+                <div className="flex-grow text-left">
+                  <button
+                    onClick={() => window.open(`/donate/print/${selectedDonation._id}`, '_blank')}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition duration-200 flex items-center mr-2 inline-flex"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clipRule="evenodd" />
+                    </svg>
+                    Print
+                  </button>
+                </div>
+              )}
+              <button 
+                onClick={() => {
+                  setSelectedDonation(null);
+                  setDonationNotes("");
+                  setEditingStatus(false);
+                }}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 transition duration-200"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       </div>
