@@ -6,7 +6,13 @@ const {
     createDonation, 
     getAllDonations: getAllDonationsService, 
     getDonationsByUser: getDonationsByUserService, 
-    updateDonationStatus: updateDonationStatusService 
+    updateDonationStatus: updateDonationStatusService,
+    getDonationById: getDonationByIdService,
+    getDonationsByStatus: getDonationsByStatusService,
+    getDonationsByDateRange: getDonationsByDateRangeService,
+    getDonationsByFoodType: getDonationsByFoodTypeService,
+    addNotesToDonation: addNotesToDonationService,
+    getDonationStatistics: getDonationStatisticsService
 } = require('../services/donate.service.js')
 
 const donateFood = asyncHandler(async(req, res) => {
@@ -138,8 +144,13 @@ const getUserDonations = asyncHandler(async(req, res) => {
         const userId = req.user?._id;
         
         if (!userId) {
-            console.error("getUserDonations - No user ID available in request:", req.user);
-            throw new ApiError(401, "Authentication required");
+            console.log("getUserDonations - No authenticated user, returning empty list");
+            // Return an empty list instead of throwing an error
+            return res
+                .status(200)
+                .json(
+                    new ApiResponse(200, "No authenticated user found - returning empty donation list", [])
+                );
         }
         
         console.log("Fetching donations for user ID:", userId.toString());
@@ -171,32 +182,322 @@ const getUserDonations = asyncHandler(async(req, res) => {
 
 // Update donation status
 const updateDonationStatus = asyncHandler(async(req, res) => {
+    // Check if req.body exists before trying to destructure from it
+    if (!req.body) {
+        return res.status(400).json(
+            new ApiResponse(400, "Request body is missing", null)
+        );
+    }
+    
     const { donationId, status } = req.body;
     
-    if (!donationId) throw new ApiError(400, "Donation ID is required");
+    // Validate required parameters
+    if (!donationId) {
+        return res.status(400).json(
+            new ApiResponse(400, "Donation ID is required", null)
+        );
+    }
+    
     if (!status || !['pending', 'accepted', 'completed', 'cancelled'].includes(status)) {
-        throw new ApiError(400, "Valid status is required");
+        return res.status(400).json(
+            new ApiResponse(400, "Valid status is required", null)
+        );
+    }
+    
+    // Check if user is authenticated
+    if (!req.user) {
+        console.log("updateDonationStatus - No authenticated user");
+        return res
+            .status(403)
+            .json(
+                new ApiResponse(403, "Authentication required to update donation status", null)
+            );
     }
     
     // Check if admin or owner of the donation
     const isAdmin = req.user?.role === 'admin';
     
     if (!isAdmin) {
-        throw new ApiError(403, "You don't have permission to update donation status");
+        return res.status(403).json(
+            new ApiResponse(403, "You don't have permission to update donation status", null)
+        );
     }
     
-    const donation = await updateDonationStatusService(donationId, status);
-    
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, "Donation status updated successfully", donation)
-    )
+    try {
+        const donation = await updateDonationStatusService(donationId, status);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Donation status updated successfully", donation)
+            );
+    } catch (error) {
+        console.error("Error updating donation status:", error);
+        
+        if (error.message === "Donation not found") {
+            return res.status(404).json(
+                new ApiResponse(404, "Donation not found", null)
+            );
+        }
+        
+        if (error.name === 'CastError') {
+            return res.status(400).json(
+                new ApiResponse(400, "Invalid donation ID format", null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error updating donation status", null)
+        );
+    }
+});
+
+// Get a single donation by ID
+const getDonationById = asyncHandler(async(req, res) => {
+    try {
+        const donationId = req.params.id;
+        
+        if (!donationId) {
+            return res.status(400).json(
+                new ApiResponse(400, "Donation ID is required", null)
+            );
+        }
+        
+        const donation = await getDonationByIdService(donationId);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Donation retrieved successfully", donation)
+            );
+    } catch (error) {
+        console.error("Error retrieving donation by ID:", error);
+        
+        if (error.message === "Donation not found") {
+            return res.status(404).json(
+                new ApiResponse(404, "Donation not found", null)
+            );
+        }
+        
+        if (error.message === "Invalid donation ID format") {
+            return res.status(400).json(
+                new ApiResponse(400, "Invalid donation ID format", null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error retrieving donation", null)
+        );
+    }
+});
+
+// Get donations by status
+const getDonationsByStatus = asyncHandler(async(req, res) => {
+    try {
+        const { status } = req.params;
+        
+        if (!status) {
+            return res.status(400).json(
+                new ApiResponse(400, "Status parameter is required", null)
+            );
+        }
+        
+        const donations = await getDonationsByStatusService(status);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, `Donations with status '${status}' retrieved successfully`, donations)
+            );
+    } catch (error) {
+        console.error("Error retrieving donations by status:", error);
+        
+        if (error.message && error.message.includes("Invalid status")) {
+            return res.status(400).json(
+                new ApiResponse(400, error.message, null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error retrieving donations by status", null)
+        );
+    }
+});
+
+// Get donations by date range
+const getDonationsByDateRange = asyncHandler(async(req, res) => {
+    try {
+        const { startDate, endDate } = req.query;
+        
+        if (!startDate || !endDate) {
+            return res.status(400).json(
+                new ApiResponse(400, "Both start date and end date are required", null)
+            );
+        }
+        
+        const donations = await getDonationsByDateRangeService(startDate, endDate);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Donations within date range retrieved successfully", donations)
+            );
+    } catch (error) {
+        console.error("Error retrieving donations by date range:", error);
+        
+        if (error.message && error.message.includes("Invalid date format")) {
+            return res.status(400).json(
+                new ApiResponse(400, error.message, null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error retrieving donations by date range", null)
+        );
+    }
+});
+
+// Get donations by food type
+const getDonationsByFoodType = asyncHandler(async(req, res) => {
+    try {
+        const { foodType } = req.params;
+        
+        if (!foodType) {
+            return res.status(400).json(
+                new ApiResponse(400, "Food type parameter is required", null)
+            );
+        }
+        
+        const donations = await getDonationsByFoodTypeService(foodType);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, `Donations with food type '${foodType}' retrieved successfully`, donations)
+            );
+    } catch (error) {
+        console.error("Error retrieving donations by food type:", error);
+        
+        if (error.message && error.message.includes("Invalid food type")) {
+            return res.status(400).json(
+                new ApiResponse(400, error.message, null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error retrieving donations by food type", null)
+        );
+    }
+});
+
+// Add notes to a donation
+const addNotesToDonation = asyncHandler(async(req, res) => {
+    try {
+        const { donationId, notes } = req.body;
+        
+        if (!donationId) {
+            return res.status(400).json(
+                new ApiResponse(400, "Donation ID is required", null)
+            );
+        }
+        
+        if (!notes || notes.trim() === '') {
+            return res.status(400).json(
+                new ApiResponse(400, "Notes cannot be empty", null)
+            );
+        }
+        
+        // Check if user is authenticated
+        if (!req.user) {
+            return res
+                .status(403)
+                .json(
+                    new ApiResponse(403, "Authentication required to add notes", null)
+                );
+        }
+        
+        // Check if admin (or in a real app, you might check if user owns the donation)
+        const isAdmin = req.user?.role === 'admin';
+        
+        if (!isAdmin) {
+            return res.status(403).json(
+                new ApiResponse(403, "You don't have permission to add notes to this donation", null)
+            );
+        }
+        
+        const updatedDonation = await addNotesToDonationService(donationId, notes);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Notes added to donation successfully", updatedDonation)
+            );
+    } catch (error) {
+        console.error("Error adding notes to donation:", error);
+        
+        if (error.message === "Donation not found") {
+            return res.status(404).json(
+                new ApiResponse(404, "Donation not found", null)
+            );
+        }
+        
+        if (error.message === "Invalid donation ID format") {
+            return res.status(400).json(
+                new ApiResponse(400, "Invalid donation ID format", null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error adding notes to donation", null)
+        );
+    }
+});
+
+// Get donation statistics
+const getDonationStatistics = asyncHandler(async(req, res) => {
+    try {
+        // Check if user is authenticated and is an admin
+        if (!req.user) {
+            return res
+                .status(403)
+                .json(
+                    new ApiResponse(403, "Authentication required to view statistics", null)
+                );
+        }
+        
+        const isAdmin = req.user?.role === 'admin';
+        
+        if (!isAdmin) {
+            return res.status(403).json(
+                new ApiResponse(403, "You don't have permission to view donation statistics", null)
+            );
+        }
+        
+        const statistics = await getDonationStatisticsService();
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Donation statistics retrieved successfully", statistics)
+            );
+    } catch (error) {
+        console.error("Error retrieving donation statistics:", error);
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error retrieving donation statistics", null)
+        );
+    }
 });
 
 module.exports = {
     donateFood,
     getAllDonations,
     getUserDonations,
-    updateDonationStatus
+    updateDonationStatus,
+    getDonationById,
+    getDonationsByStatus,
+    getDonationsByDateRange, 
+    getDonationsByFoodType,
+    addNotesToDonation,
+    getDonationStatistics
 }
