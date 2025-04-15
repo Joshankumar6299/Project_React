@@ -17,6 +17,18 @@ const auth = asyncHandler(async (req, res, next) => {
         // Check if token exists
         if (!token) {
             console.log('No token provided in request');
+            
+            // Check if the request is for a donation route that needs optional auth
+            const isOptionalAuthRoute = req.originalUrl.includes('/donate/user') || 
+                                       req.originalUrl.includes('/donate/all') ||
+                                       req.originalUrl.includes('/donate/status');
+            
+            if (isOptionalAuthRoute) {
+                console.log('Optional auth route detected. Continuing without user data.');
+                req.user = null; // Set user to null but don't block the request
+                return next();
+            }
+            
             throw new ApiError(401, 'Authentication required');
         }
         
@@ -68,4 +80,4 @@ const auth = asyncHandler(async (req, res, next) => {
     }
 });
 
-module.exports = auth; 
+module.exports = auth;
