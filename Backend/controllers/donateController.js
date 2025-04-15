@@ -114,12 +114,6 @@ const donateFood = asyncHandler(async(req, res) => {
             );
         }
         
-        if (error.code === 11000) {
-            return res.status(400).json(
-                new ApiResponse(400, "Duplicate entry error", null)
-            );
-        }
-        
         // For other errors, return a generic 500 error
         return res.status(500).json(
             new ApiResponse(500, "Server error: " + (error.message || "Unknown error"), null)

@@ -12,7 +12,7 @@ const createDonation = async (data) => {
     try {
         // Sanitize data to prevent errors
         const sanitizedData = { ...data };
-        
+       
         // Check if mongoose is properly imported
         console.log('Mongoose version:', mongoose.version);
         console.log('Is ObjectId valid function available:', typeof mongoose.Types.ObjectId.isValid === 'function');
@@ -31,22 +31,17 @@ const createDonation = async (data) => {
                         sanitizedData.user = new mongoose.Types.ObjectId(sanitizedData.user);
                         console.log('Converted string to ObjectId successfully:', sanitizedData.user.toString());
                     } else {
-                        console.warn('Invalid ObjectId string, setting to null:', sanitizedData.user);
                         sanitizedData.user = null;
                     }
                 }
                 // Handle other types
                 else {
-                    console.warn('User ID is not an ObjectId or string, setting to null:', 
-                        typeof sanitizedData.user);
                     sanitizedData.user = null;
                 }
             } catch (err) {
-                console.error('Error processing user ID (setting to null):', err);
                 sanitizedData.user = null;
             }
         } else {
-            console.log('No user ID provided, donation will be anonymous');
             sanitizedData.user = null;
         }
         
@@ -54,6 +49,11 @@ const createDonation = async (data) => {
         if (sanitizedData._id) {
             delete sanitizedData._id;
         }
+        
+        // Add a unique identifier to each donation to prevent duplicate key errors
+        // This ensures each donation is unique even if the same user donates multiple times
+        sanitizedData.donationDate = new Date();
+        sanitizedData.uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
         
         console.log('Creating donation with final sanitized data:', {
             ...sanitizedData,
@@ -106,7 +106,42 @@ const createDonation = async (data) => {
                 kind: error.kind
             });
         } else if (error.code === 11000) {
-            console.error('Duplicate key error:', error.keyValue);
+            console.error('Duplicate key error detected:', error.keyValue);
+            
+            // Create a new attempt with a different unique identifier to ensure it's accepted
+            try {
+                console.log('Attempting to create donation with additional uniqueness guarantees');
+                
+                // Create a new object with modified data to ensure uniqueness
+                const modifiedData = { ...data };
+                modifiedData.donationDate = new Date(); // Update timestamp to current time
+                modifiedData.uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`; // Add longer random string
+                
+                console.log('Retry with modified data:', {
+                    donationDate: modifiedData.donationDate,
+                    uniqueId: modifiedData.uniqueId
+                });
+                
+                // Create with the modified data
+                return await donateModel.create(modifiedData);
+            } catch (retryError) {
+                console.error('Second attempt to create donation failed:', retryError);
+                
+                // Try one more time with an even more unique approach
+                try {
+                    console.log('Final attempt to create donation');
+                    
+                    // Add even more randomness to ensure uniqueness
+                    const finalAttemptData = { ...data };
+                    finalAttemptData.donationDate = new Date();
+                    finalAttemptData.uniqueId = `final-${Date.now()}-${Math.random().toString(36).substring(2, 15)}-${Math.random().toString(36).substring(2, 15)}`;
+                    
+                    return await donateModel.create(finalAttemptData);
+                } catch (finalError) {
+                    console.error('All attempts to create donation failed:', finalError);
+                    throw finalError;
+                }
+            }
         }
         
         throw error;

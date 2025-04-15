@@ -13,6 +13,7 @@ const donateSchema = new mongoose.Schema({
     email: {
         type: String,
         required: true,
+        unique: false, // Explicitly set to false to ensure no uniqueness constraint
     },
     phone: {
         type: String,
@@ -42,6 +43,11 @@ const donateSchema = new mongoose.Schema({
     },
     notes: {
         type: String
+    },
+    uniqueId: {
+        type: String,
+        // This will ensure each donation has a unique identifier
+        // even if the same user donates multiple times
     }
 }, {
     timestamps: true
