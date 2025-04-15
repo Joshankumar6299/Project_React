@@ -428,18 +428,18 @@ const Dashboard = () => {
       
       let donationData = null;
       
-      // Check all possible data structures in the response
-      if (response.data) {
-        if (response.data.data) {
-          // Standard API structure
-          donationData = response.data.data;
-          console.log('Found donation details in response.data.data');
-        } else if (response.data.message && typeof response.data.message === 'object') {
-          // Alternative API structure with message object
+      // Handle the specific response structure where donation details are in message
+      if (response.data && response.data.success) {
+        if (response.data.message && typeof response.data.message === 'object' && !Array.isArray(response.data.message)) {
+          // Main case - donation details are directly in the message object
           donationData = response.data.message;
           console.log('Found donation details in response.data.message');
+        } else if (response.data.data) {
+          // Alternative structure - data might be in the data field
+          donationData = response.data.data;
+          console.log('Found donation details in response.data.data');
         } else if (Array.isArray(response.data.message) && response.data.message.length > 0) {
-          // Array structure in message
+          // Handle case where message is an array
           donationData = response.data.message[0];
           console.log('Found donation details in response.data.message array');
         }
@@ -447,21 +447,33 @@ const Dashboard = () => {
       
       if (donationData) {
         console.log('Setting donation details:', donationData);
+        
+        // Extract user details if they're nested in the donation data
+        const userDetails = donationData.user || null;
+        
+        // Set the selected donation with the donation data
         setSelectedDonation(donationData);
         setDonationNotes(donationData.notes || "");
         
-        // Fetch user details if user ID is available and we're admin
-        if (isAdmin && donationData.user) {
+        // If user details are directly provided in the response, use them
+        if (userDetails) {
+          console.log('User details found in donation response:', userDetails);
+          setSelectedDonation(prev => ({
+            ...prev,
+            userDetails: userDetails
+          }));
+        } 
+        // If user details aren't provided but we're admin and have a user ID, fetch them
+        else if (isAdmin && donationData.user && typeof donationData.user === 'string') {
           try {
             const userResponse = await axios.get(`/user/profile?id=${donationData.user}`);
             if (userResponse.data && userResponse.data.success) {
-              // Merge user details with donation data
-              const userDetails = userResponse.data.data || userResponse.data.message;
+              const fetchedUserDetails = userResponse.data.data || userResponse.data.message;
               setSelectedDonation(prev => ({
                 ...prev,
-                userDetails: userDetails
+                userDetails: fetchedUserDetails
               }));
-              console.log('Added user details to donation:', userDetails);
+              console.log('Added user details to donation:', fetchedUserDetails);
             }
           } catch (userError) {
             console.error('Error fetching user details:', userError);
@@ -1147,11 +1159,6 @@ const Dashboard = () => {
         <div className="p-6 text-center">
           <h1 className="text-2xl font-bold">Food Donate</h1>
           <h1 className="mt-2">Welcome {isAdmin ? 'Admin' : user?.fullname || 'User'}</h1>
-          {userProfile && (
-            <div className="mt-2 bg-blue-800 rounded-md p-2 text-center">
-              <p className="text-sm">Total Donations: {userProfile.totalDonations || 0}</p>
-            </div>
-          )}
         </div>
         <nav className="flex-grow">
           <ul className="space-y-2 px-4">
@@ -1186,44 +1193,13 @@ const Dashboard = () => {
       <div className="flex-grow bg-gray-100 overflow-y-auto">
         <header className="bg-white shadow-md p-4 flex justify-between items-center">
           <h2 className="text-xl font-bold">{activePage}</h2>
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-            </div>
-          </div>
+
         </header>
 
         <div className="p-6">
           {activePage === "Dashboard" && (
             <>
-              {userProfile && (
-                <div className="bg-white p-4 rounded-lg shadow-md mb-6">
-                  <h3 className="text-lg font-bold mb-4">Your Donation Stats</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="bg-blue-100 p-4 rounded-lg text-center">
-                      <p className="text-sm text-blue-800">Total Donations</p>
-                      <p className="text-2xl font-bold text-blue-800">{userProfile.totalDonations || 0}</p>
-                    </div>
-                    <div className="bg-green-100 p-4 rounded-lg text-center">
-                      <p className="text-sm text-green-800">Accepted Donations</p>
-                      <p className="text-2xl font-bold text-green-800">
-                        {donations.filter(d => d.status === 'accepted').length}
-                      </p>
-                    </div>
-                    <div className="bg-yellow-100 p-4 rounded-lg text-center">
-                      <p className="text-sm text-yellow-800">Pending Donations</p>
-                      <p className="text-2xl font-bold text-yellow-800">
-                        {donations.filter(d => d.status === 'pending').length}
-                      </p>
-                    </div>
-                    <div className="bg-purple-100 p-4 rounded-lg text-center">
-                      <p className="text-sm text-purple-800">Total Quantity</p>
-                      <p className="text-2xl font-bold text-purple-800">
-                        {donations.reduce((sum, donation) => sum + parseInt(donation.foodQuantity || 0), 0)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
+              {/* Removing the userProfile stats box that was here */}
               
               {isAdmin ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
