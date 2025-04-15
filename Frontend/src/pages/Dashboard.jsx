@@ -29,16 +29,42 @@ const Dashboard = () => {
   const [editingStatus, setEditingStatus] = useState(false);
   const [newStatus, setNewStatus] = useState("");
 
+  // Add this at the top of your component to prevent duplicate error toasts
+  const [hasShownNetworkError, setHasShownNetworkError] = useState(false);
+  
+  // Use this for controlling API retries
+  const [apiRetryCount, setApiRetryCount] = useState(0);
+  const MAX_API_RETRIES = 2;
+
   useEffect(() => {
     if (user && !isLoading) {
       if (isAdmin) {
-        fetchAllDonations();
-        fetchDonationStatistics();
+        // Only attempt to fetch data if we haven't exceeded retry count
+        if (apiRetryCount < MAX_API_RETRIES) {
+          fetchAllDonations();
+          fetchDonationStatistics();
+        }
       } else {
-        fetchUserDonations();
+        // Only attempt to fetch data if we haven't exceeded retry count
+        if (apiRetryCount < MAX_API_RETRIES && !hasShownNetworkError) {
+          fetchUserDonations();
+        }
       }
     }
-  }, [user, isAdmin, isLoading]);
+  }, [user, isAdmin, isLoading, apiRetryCount]);
+
+  // Separate useEffect to handle data update confirmation
+  useEffect(() => {
+    console.log("Donations data updated:", {
+      length: donations.length,
+      data: donations.slice(0, 2) // Log first couple of items for debugging
+    });
+
+    console.log("Filtered donations updated:", {
+      length: filteredDonations.length,
+      data: filteredDonations.slice(0, 2) // Log first couple of items for debugging
+    });
+  }, [donations, filteredDonations]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -131,26 +157,147 @@ const Dashboard = () => {
 
   const fetchUserDonations = async () => {
     try {
+      // Increment retry count to prevent infinite retries
+      setApiRetryCount(prevCount => prevCount + 1);
+      
       console.log('Attempting to fetch donations from /donate/user');
+      setIsLoading(true); // Set loading state to true while fetching
+      
+      // Add a check for mock data when server is unavailable for development purposes
+      if (process.env.NODE_ENV === 'development' && localStorage.getItem('useMockData') === 'true') {
+        console.log('Using mock donation data for development');
+        // Sample mock data that matches the donateModel schema
+        const mockData = [
+          {
+            _id: 'mock1',
+            fullname: 'Test User',
+            email: 'test@example.com',
+            phone: '1234567890',
+            foodType: 'veg',
+            fullAddress: '123 Test Street, Test City',
+            foodQuantity: '2',
+            status: 'pending',
+            donationDate: new Date().toISOString(),
+            notes: ''
+          },
+          {
+            _id: 'mock2',
+            fullname: 'Test User 2',
+            email: 'test2@example.com',
+            phone: '0987654321',
+            foodType: 'non-veg',
+            fullAddress: '456 Sample Road, Example Town',
+            foodQuantity: '3',
+            status: 'accepted',
+            donationDate: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+            notes: 'Will deliver personally'
+          }
+        ];
+        
+        setDonations(mockData);
+        setFilteredDonations(mockData);
+        setIsLoading(false);
+        return;
+      }
+      
       const response = await axios.get('/donate/user');
       console.log('Donation response received:', response);
       
-      if (response.data && response.data.success) {
-        // Ensure that response.data.data is always an array
-        const donationsData = Array.isArray(response.data.data) ? response.data.data : [];
-        console.log('Setting donations state with:', donationsData.length, 'donations');
-        setDonations(donationsData);
+      if (response.data) {
+        // Extract donations data from the response, checking all possible locations
+        let donationsData = [];
+        
+        // Check all possible locations for donation data
+        if (Array.isArray(response.data.data)) {
+          // If data is directly in data.data as an array
+          donationsData = response.data.data;
+          console.log('Found donations in response.data.data array');
+        } else if (response.data.data && response.data.data.donations && Array.isArray(response.data.data.donations)) {
+          // If donations are nested inside data.data.donations
+          donationsData = response.data.data.donations;
+          console.log('Found donations in response.data.data.donations array');
+        } else if (response.data.donations && Array.isArray(response.data.donations)) {
+          // If donations are in response.data.donations
+          donationsData = response.data.donations;
+          console.log('Found donations in response.data.donations array');
+        } else if (Array.isArray(response.data.message)) {
+          // If data is directly in data.message as an array
+          donationsData = response.data.message;
+          console.log('Found donations in response.data.message array');
+        } else if (response.data.message && Array.isArray(response.data.message.data)) {
+          // If data is in data.message.data
+          donationsData = response.data.message.data;
+          console.log('Found donations in response.data.message.data array');
+        } else if (response.data.message && response.data.message.donations && Array.isArray(response.data.message.donations)) {
+          // If donations are in data.message.donations
+          donationsData = response.data.message.donations;
+          console.log('Found donations in response.data.message.donations array');
+        } else if (response.data.success && Array.isArray(response.data.message)) {
+          // If data is in message field when success is true
+          donationsData = response.data.message;
+          console.log('Found donations in response.data.message array with success flag');
+        } else {
+          // If we can't find the data in any common location, log the structure
+          console.warn('Could not locate donations array in response structure:', response.data);
+          console.warn('Response structure keys:', Object.keys(response.data));
+          if (response.data.message) {
+            console.warn('Message field type:', typeof response.data.message);
+            if (typeof response.data.message === 'object') {
+              console.warn('Message field keys:', Object.keys(response.data.message));
+            }
+          }
+        }
+        
+        // Log the full donation data to help debug
+        console.log('Donation data extracted:', donationsData);
+        
+        // Make sure we have valid objects with required properties from donateModel
+        const validDonations = donationsData.filter(donation => 
+          donation && 
+          donation._id && 
+          donation.donationDate && 
+          donation.status && 
+          donation.foodType && 
+          donation.foodQuantity
+        );
+        
+        if (validDonations.length !== donationsData.length) {
+          console.warn(`Found ${donationsData.length - validDonations.length} invalid donation entries`);
+        }
+        
+        // Sort donations by date (newest first)
+        const sortedDonations = validDonations.sort((a, b) => {
+          return new Date(b.donationDate) - new Date(a.donationDate);
+        });
+        
+        console.log('Setting donations state with:', sortedDonations.length, 'valid donations');
+        setDonations(sortedDonations);
+        
+        // Force update filteredDonations immediately after updating donations
+        setFilteredDonations(sortedDonations);
+        
+        // Display a success message (only on first successful load)
+        if (sortedDonations.length > 0 && apiRetryCount < 2) {
+          toast.success(`Successfully loaded ${sortedDonations.length} donations`);
+        } else if (sortedDonations.length === 0 && apiRetryCount < 2) {
+          toast.info("You haven't made any donations yet");
+        }
       } else {
-        console.warn('Response success flag is false or missing:', response.data);
-        toast.warning('Received an invalid response format from the server');
+        console.warn('No data in response:', response);
+        if (!hasShownNetworkError) {
+          toast.warning('Received empty response from the server');
+          setHasShownNetworkError(true);
+        }
         // Initialize as empty array to prevent filter errors
         setDonations([]);
+        setFilteredDonations([]);
       }
     } catch (error) {
       console.error('Error fetching donations:', error);
       
       // Initialize as empty array to prevent filter errors
       setDonations([]);
+      setFilteredDonations([]);
       
       if (error.response) {
         console.error('Server response error:', {
@@ -159,15 +306,86 @@ const Dashboard = () => {
           headers: error.response.headers
         });
         
-        const errorMessage = error.response.data?.message || `Server error (${error.response.status})`;
-        toast.error(`Failed to fetch donations: ${errorMessage}`);
+        // Check for token expiration in 500 errors
+        const statusCode = error.response.status;
+        if (statusCode === 401 || statusCode === 403 || 
+            (statusCode === 500 && typeof error.response.data === 'string' && 
+             error.response.data.includes('Token has expired'))) {
+          console.warn('Authentication failed in fetchUserDonations. Session expired.');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          
+          // Only show the error toast once
+          if (!hasShownNetworkError) {
+            toast.error("Your session has expired. Please log in again.");
+            setHasShownNetworkError(true);
+          }
+          
+          navigate('/login', { state: { from: '/dashboard', expired: true } });
+          return;
+        }
+        
+        // Only show error message once
+        if (!hasShownNetworkError) {
+          const errorMessage = error.response.data?.message || `Server error (${error.response.status})`;
+          toast.error(`Failed to fetch donations: ${errorMessage}`);
+          setHasShownNetworkError(true);
+        }
       } else if (error.request) {
         console.error('Network error - No response received:', error.request);
-        toast.error('Failed to fetch donations: Network error, server not responding');
-      } else {
+        
+        // If in development mode, enable mock data for future requests
+        if (process.env.NODE_ENV === 'development') {
+          localStorage.setItem('useMockData', 'true');
+          
+          // Only show warning toast once
+          if (!hasShownNetworkError) {
+            toast.warning('Could not connect to server. Using sample data for display purposes.');
+            setHasShownNetworkError(true);
+          }
+          
+          // Add sample mock data matching donateModel schema
+          const mockData = [
+            {
+              _id: 'mock1',
+              fullname: 'Test User',
+              email: 'test@example.com',
+              phone: '1234567890',
+              foodType: 'veg',
+              fullAddress: '123 Test Street, Test City',
+              foodQuantity: '2',
+              status: 'pending',
+              donationDate: new Date().toISOString(),
+              notes: ''
+            },
+            {
+              _id: 'mock2',
+              fullname: 'Test User 2',
+              email: 'test2@example.com',
+              phone: '0987654321',
+              foodType: 'non-veg',
+              fullAddress: '456 Sample Road, Example Town',
+              foodQuantity: '3',
+              status: 'accepted',
+              donationDate: new Date(Date.now() - 86400000).toISOString(),
+              notes: 'Will deliver personally'
+            }
+          ];
+          
+          setDonations(mockData);
+          setFilteredDonations(mockData);
+        } else if (!hasShownNetworkError) {
+          toast.error('Failed to connect to the server. Please check your network connection or try again later.');
+          setHasShownNetworkError(true);
+        }
+      } else if (!hasShownNetworkError) {
         console.error('Request setup error:', error.message);
         toast.error(`Failed to fetch donations: ${error.message}`);
+        setHasShownNetworkError(true);
       }
+    } finally {
+      setIsLoading(false); // Always reset loading state
     }
   };
 
@@ -180,6 +398,25 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
+      
+      // Handle token expiration errors
+      if (error.response) {
+        const statusCode = error.response.status;
+        // Convert the error data to string format regardless of input type
+        const errorData = typeof error.response.data === 'string' 
+          ? error.response.data 
+          : JSON.stringify(error.response.data);
+          
+        if (statusCode === 401 || statusCode === 403 || 
+            (statusCode === 500 && errorData && errorData.includes('Token has expired'))) {
+          console.warn('Authentication failed in fetchUserProfile. Logging out...');
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          toast.error("Your session has expired. Please log in again.");
+          navigate('/login', { state: { from: '/dashboard', expired: true } });
+        }
+      }
     }
   };
 
