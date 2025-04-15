@@ -82,9 +82,22 @@ const Profile = () => {
         });
 
         console.log('User donations fetched:', response.data);
-        setUserDonations(response.data.data || []);
+        // Ensure userDonations is always an array
+        if (response.data && response.data.data) {
+          // Check if data is an array, if not, initialize as empty array
+          const donationsData = Array.isArray(response.data.data) ? response.data.data : [];
+          setUserDonations(donationsData);
+          console.log(`Set ${donationsData.length} donations to state`);
+        } else {
+          // Set empty array if no data
+          setUserDonations([]);
+          console.log('No donation data found, setting empty array');
+        }
       } catch (apiError) {
         console.error('API Error:', apiError);
+        
+        // Initialize as empty array on error
+        setUserDonations([]);
         
         // Check for authentication errors
         if (apiError.response?.status === 401) {
@@ -99,6 +112,8 @@ const Profile = () => {
     } catch (error) {
       console.error('Error in donation fetch process:', error);
       toast.error('An unexpected error occurred. Please try again.');
+      // Initialize as empty array on error
+      setUserDonations([]);
     } finally {
       setIsLoadingDonations(false);
     }
