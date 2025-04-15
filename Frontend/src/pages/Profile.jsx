@@ -12,6 +12,8 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [userDonations, setUserDonations] = useState([]);
   const [isLoadingDonations, setIsLoadingDonations] = useState(false);
+  const [selectedDonation, setSelectedDonation] = useState(null);
+  const [showDonationModal, setShowDonationModal] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -82,16 +84,26 @@ const Profile = () => {
         });
 
         console.log('User donations fetched:', response.data);
-        // Ensure userDonations is always an array
-        if (response.data && response.data.data) {
-          // Check if data is an array, if not, initialize as empty array
-          const donationsData = Array.isArray(response.data.data) ? response.data.data : [];
-          setUserDonations(donationsData);
-          console.log(`Set ${donationsData.length} donations to state`);
-        } else {
-          // Set empty array if no data
+        
+        // Check if donations are in the message array (as per the provided response structure)
+        if (response.data && response.data.success && Array.isArray(response.data.message)) {
+          setUserDonations(response.data.message);
+          console.log(`Set ${response.data.message.length} donations to state from message array`);
+        }
+        // Fallback checks for other possible response structures
+        else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+          setUserDonations(response.data.data);
+          console.log(`Set ${response.data.data.length} donations to state from data array`);
+        } 
+        else if (response.data && Array.isArray(response.data)) {
+          setUserDonations(response.data);
+          console.log(`Set ${response.data.length} donations to state from direct array`);
+        }
+        else {
+          // Set empty array if no recognizable data structure
           setUserDonations([]);
-          console.log('No donation data found, setting empty array');
+          console.log('No donation data found in expected format, setting empty array');
+          console.log('Response data structure:', response.data);
         }
       } catch (apiError) {
         console.error('API Error:', apiError);
@@ -117,6 +129,18 @@ const Profile = () => {
     } finally {
       setIsLoadingDonations(false);
     }
+  };
+
+  // Handle viewing donation details
+  const viewDonationDetails = (donation) => {
+    setSelectedDonation(donation);
+    setShowDonationModal(true);
+  };
+
+  // Close donation details modal
+  const closeDonationModal = () => {
+    setShowDonationModal(false);
+    setSelectedDonation(null);
   };
 
   const handleChange = (e) => {
@@ -228,7 +252,14 @@ const Profile = () => {
     }
     
     try {
+      const user = getUserFromStorage();
       const token = localStorage.getItem('accessToken');
+      
+      if (!user || !user._id) {
+        toast.error('User information not available');
+        setIsDeleting(false);
+        return;
+      }
       
       if (!token) {
         toast.error('Authentication required');
@@ -238,9 +269,13 @@ const Profile = () => {
       
       // Make API call to delete user account with better error handling
       try {
+        // Send the user ID in the request body as expected by the backend
         await axios.delete('/user/delete', {
           headers: {
             Authorization: `Bearer ${token}`
+          },
+          data: {
+            userId: user._id
           }
         });
         
@@ -394,19 +429,11 @@ const Profile = () => {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <button 
-                    className="text-indigo-600 hover:text-indigo-900 mr-3"
-                    onClick={() => {/* View details functionality */}}
+                    className="text-indigo-600 hover:text-indigo-900"
+                    onClick={() => viewDonationDetails(donation)}
                   >
                     View
                   </button>
-                  {donation.status === 'pending' && (
-                    <button 
-                      className="text-red-600 hover:text-red-900"
-                      onClick={() => {/* Cancel donation functionality */}}
-                    >
-                      Cancel
-                    </button>
-                  )}
                 </td>
               </tr>
             ))}
@@ -728,6 +755,108 @@ const Profile = () => {
         <div className="bg-white p-8 rounded-lg shadow-md w-full">
           <h2 className="text-2xl font-bold mb-6">Account Settings</h2>
           {renderSettings()}
+        </div>
+      )}
+      
+      {/* Donation Details Modal */}
+      {showDonationModal && selectedDonation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-xl font-semibold text-gray-900">
+                Donation Details
+              </h3>
+              <button
+                type="button"
+                className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm p-1.5 ml-auto"
+                onClick={closeDonationModal}
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                    clipRule="evenodd"
+                  ></path>
+                </svg>
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">Donation ID</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedDonation._id}</p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">Date</h4>
+                    <p className="mt-1 text-sm text-gray-900">{formatDate(selectedDonation.donationDate)}</p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">Status</h4>
+                    <span className={`mt-1 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeColor(selectedDonation.status)}`}>
+                      {selectedDonation.status}
+                    </span>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">Food Type</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedDonation.foodType}</p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">Quantity</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedDonation.foodQuantity}</p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h4 className="text-sm font-medium text-gray-500">Donor Name</h4>
+                    <p className="mt-1 text-sm text-gray-900">{selectedDonation.fullname || formData.fullName}</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-4">
+                <h4 className="text-sm font-medium text-gray-500">Delivery Address</h4>
+                <p className="mt-1 text-sm text-gray-900">{selectedDonation.fullAddress}</p>
+              </div>
+              
+              {selectedDonation.notes && (
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium text-gray-500">Additional Notes</h4>
+                  <p className="mt-1 text-sm text-gray-900">{selectedDonation.notes}</p>
+                </div>
+              )}
+              
+              <div className="mt-8 border-t pt-4">
+                <div className="flex items-center text-gray-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-xs">
+                    {selectedDonation.status === 'pending' && 'Your donation is waiting for approval.'}
+                    {selectedDonation.status === 'accepted' && 'Your donation has been accepted and will be collected soon.'}
+                    {selectedDonation.status === 'completed' && 'Your donation was successfully delivered. Thank you!'}
+                    {selectedDonation.status === 'cancelled' && 'This donation was cancelled.'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 px-4 py-3 flex justify-end rounded-b-lg">
+              <button
+                type="button"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                onClick={closeDonationModal}
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
