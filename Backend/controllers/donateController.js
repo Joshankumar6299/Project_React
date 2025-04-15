@@ -138,8 +138,13 @@ const getUserDonations = asyncHandler(async(req, res) => {
         const userId = req.user?._id;
         
         if (!userId) {
-            console.error("getUserDonations - No user ID available in request:", req.user);
-            throw new ApiError(401, "Authentication required");
+            console.log("getUserDonations - No authenticated user, returning empty list");
+            // Return an empty list instead of throwing an error
+            return res
+                .status(200)
+                .json(
+                    new ApiResponse(200, "No authenticated user found - returning empty donation list", [])
+                );
         }
         
         console.log("Fetching donations for user ID:", userId.toString());
@@ -171,27 +176,74 @@ const getUserDonations = asyncHandler(async(req, res) => {
 
 // Update donation status
 const updateDonationStatus = asyncHandler(async(req, res) => {
+    // Check if req.body exists before trying to destructure from it
+    if (!req.body) {
+        return res.status(400).json(
+            new ApiResponse(400, "Request body is missing", null)
+        );
+    }
+    
     const { donationId, status } = req.body;
     
-    if (!donationId) throw new ApiError(400, "Donation ID is required");
+    // Validate required parameters
+    if (!donationId) {
+        return res.status(400).json(
+            new ApiResponse(400, "Donation ID is required", null)
+        );
+    }
+    
     if (!status || !['pending', 'accepted', 'completed', 'cancelled'].includes(status)) {
-        throw new ApiError(400, "Valid status is required");
+        return res.status(400).json(
+            new ApiResponse(400, "Valid status is required", null)
+        );
+    }
+    
+    // Check if user is authenticated
+    if (!req.user) {
+        console.log("updateDonationStatus - No authenticated user");
+        return res
+            .status(403)
+            .json(
+                new ApiResponse(403, "Authentication required to update donation status", null)
+            );
     }
     
     // Check if admin or owner of the donation
     const isAdmin = req.user?.role === 'admin';
     
     if (!isAdmin) {
-        throw new ApiError(403, "You don't have permission to update donation status");
+        return res.status(403).json(
+            new ApiResponse(403, "You don't have permission to update donation status", null)
+        );
     }
     
-    const donation = await updateDonationStatusService(donationId, status);
-    
-    return res
-    .status(200)
-    .json(
-        new ApiResponse(200, "Donation status updated successfully", donation)
-    )
+    try {
+        const donation = await updateDonationStatusService(donationId, status);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Donation status updated successfully", donation)
+            );
+    } catch (error) {
+        console.error("Error updating donation status:", error);
+        
+        if (error.message === "Donation not found") {
+            return res.status(404).json(
+                new ApiResponse(404, "Donation not found", null)
+            );
+        }
+        
+        if (error.name === 'CastError') {
+            return res.status(400).json(
+                new ApiResponse(400, "Invalid donation ID format", null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error updating donation status", null)
+        );
+    }
 });
 
 module.exports = {
