@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Create a custom instance of axios with default config
 const instance = axios.create({
-    baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000',
+    baseURL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000',
     timeout: 15000, // Increased timeout to 15 seconds for slower connections
     headers: {
         'Content-Type': 'application/json',
@@ -20,6 +20,27 @@ const getAuthToken = () => {
     // Make sure token is properly formatted (not undefined, null, etc)
     return token.trim() || null;
 };
+
+// Function to handle token expiration and logout
+const handleTokenExpiration = () => {
+    // Clear all auth tokens
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('useMockData'); // Also clear mock data flag
+    
+    // Redirect to login page if we're not already there
+    if (!window.location.pathname.includes('/login')) {
+        console.warn('Session expired. Redirecting to login page...');
+        // Use timeout to allow current code to finish execution
+        setTimeout(() => {
+            window.location.href = '/login?expired=true';
+        }, 100);
+    }
+};
+
+// Log current backend URL configuration on startup
+console.log('Backend API URL configured as:', instance.defaults.baseURL);
 
 // Add request interceptor for logging and token management
 instance.interceptors.request.use(
@@ -75,22 +96,39 @@ instance.interceptors.response.use(
                 method: error.config?.method?.toUpperCase()
             });
             
-            // Handle token expiration
-            if (error.response.status === 401) {
-                console.warn('Authentication error - user may need to log in again');
+            // Check for token expiration or authentication errors
+            if (error.response.status === 401 || error.response.status === 403) {
+                const responseData = typeof error.response.data === 'string' 
+                    ? error.response.data 
+                    : JSON.stringify(error.response.data);
                 
                 // Check for specific token errors
-                const errorMsg = error.response.data?.message || '';
                 if (
-                    errorMsg.includes('Invalid token') || 
-                    errorMsg.includes('expired') || 
-                    errorMsg.includes('Authentication required')
+                    responseData.includes('Token has expired') || 
+                    responseData.includes('expired') || 
+                    responseData.includes('Invalid token') || 
+                    responseData.includes('Authentication required') ||
+                    responseData.includes('jwt expired') ||
+                    responseData.includes('not authenticated')
                 ) {
-                    console.log('Clearing invalid token from localStorage');
-                    localStorage.removeItem('accessToken');
-                    
-                    // Don't redirect here - let the component handle it
-                    console.warn('Token cleared due to authentication error');
+                    console.warn('Authentication token has expired or is invalid');
+                    handleTokenExpiration();
+                }
+            }
+            
+            // Handle 500 errors that might contain token expiration info
+            if (error.response.status === 500) {
+                const responseData = typeof error.response.data === 'string' 
+                    ? error.response.data 
+                    : JSON.stringify(error.response.data);
+                
+                if (
+                    responseData.includes('Token has expired') ||
+                    responseData.includes('jwt expired') ||
+                    responseData.includes('authentication')
+                ) {
+                    console.warn('Server error due to authentication issue');
+                    handleTokenExpiration();
                 }
             }
         } else if (error.request) {
