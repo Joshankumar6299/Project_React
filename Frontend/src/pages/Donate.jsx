@@ -417,7 +417,7 @@ const Donate = () => {
       <div className="md:w-1/2 bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-3xl font-bold text-center mb-6">Donate Now</h2>
         
-        {/* Show donation history if user has donated before */}
+    {/* Show donation history if user has donated before */}
         {userProfile && userProfile.totalDonations > 0 && (
           <div className="mb-4 bg-green-50 text-green-700 p-3 rounded-lg">
             <p className="font-medium">Thank you for your previous {userProfile.totalDonations} donation{userProfile.totalDonations > 1 ? 's' : ''}!</p>
