@@ -363,13 +363,13 @@ const Profile = () => {
       <div className="space-y-2">
         <h3 className="text-sm text-gray-500 font-medium">City</h3>
         <p className="text-lg">{formData.city || 'Not provided'}</p>
-      </div>
+            </div>
       
       <div className="space-y-2">
         <h3 className="text-sm text-gray-500 font-medium">Pin Code</h3>
         <p className="text-lg">{formData.pinCode || 'Not provided'}</p>
-      </div>
-    </div>
+            </div>
+          </div>
   );
 
   // Render user's donation history
@@ -456,8 +456,8 @@ const Profile = () => {
             Change Password
           </button>
         </div>
-      </div>
-      
+        </div>
+
       <div className="border-b pb-6">
         <h3 className="text-lg font-medium mb-4">Email Notifications</h3>
         <div className="space-y-2">
@@ -485,8 +485,8 @@ const Profile = () => {
           </div>
         </div>
       </div>
-      
-      <div>
+
+        <div>
         <h3 className="text-lg font-medium text-red-600 mb-4">Danger Zone</h3>
         <div className="bg-red-50 border border-red-200 rounded-md p-4">
           <h4 className="text-red-800 font-medium mb-2">Delete Account</h4>
