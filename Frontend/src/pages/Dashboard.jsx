@@ -567,13 +567,13 @@ const Dashboard = () => {
         labels: Object.keys(statistics.byFoodType).map(type => 
           type.charAt(0).toUpperCase() + type.slice(1)
         ),
-        datasets: [
-          {
+    datasets: [
+      {
             data: Object.values(statistics.byFoodType),
             backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
-          },
-        ],
-      };
+      },
+    ],
+  };
     }
     
     const foodTypes = {};
@@ -586,12 +586,12 @@ const Dashboard = () => {
       labels: Object.keys(foodTypes).map(type => 
         type.charAt(0).toUpperCase() + type.slice(1)
       ),
-      datasets: [
-        {
+    datasets: [
+      {
           data: Object.values(foodTypes),
-          backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
-        },
-      ],
+        backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
+      },
+    ],
     };
   };
 
@@ -1127,7 +1127,7 @@ const Dashboard = () => {
               
               {isAdmin ? (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                  <div className="bg-blue-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                <div className="bg-blue-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                     <h3 className="text-lg font-bold">Total Donations</h3>
                     <p className="text-2xl font-bold">{statistics?.totalDonations || allDonations.length}</p>
                   </div>
@@ -1149,8 +1149,8 @@ const Dashboard = () => {
                   <div className="bg-blue-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                     <h3 className="text-lg font-bold">Total Donations</h3>
                     <p className="text-2xl font-bold">{donations.length}</p>
-                  </div>
-                  <div className="bg-green-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+                </div>
+                <div className="bg-green-500 text-white p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
                     <h3 className="text-lg font-bold">Total Quantity</h3>
                     <p className="text-2xl font-bold">
                       {donations.reduce((sum, donation) => sum + parseInt(donation.foodQuantity || 0), 0)}
@@ -1257,7 +1257,7 @@ const Dashboard = () => {
               )}
             </>
           )}
-          
+
           {activePage === "Donation Management" && isAdmin && (
             <div className="space-y-6">
               <div className="bg-white p-6 rounded-lg shadow-md">
@@ -1303,7 +1303,7 @@ const Dashboard = () => {
                     />
                   </div>
                   
-                  <div>
+            <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">To Date</label>
                     <input 
                       type="date" 
@@ -1387,7 +1387,7 @@ const Dashboard = () => {
               </div>
             </div>
           )}
-          
+
           {activePage === "Statistics" && isAdmin && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
