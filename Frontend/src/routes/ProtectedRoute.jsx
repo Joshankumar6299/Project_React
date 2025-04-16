@@ -5,8 +5,9 @@ import { toast } from 'react-toastify';
 /**
  * ProtectedRoute component to protect routes that require authentication
  * If user is not logged in, they will be redirected to the login page
+ * For admin routes, it checks for admin token
  */
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children, adminRequired = false }) => {
   const location = useLocation();
   
   useEffect(() => {
@@ -21,7 +22,25 @@ const ProtectedRoute = ({ children }) => {
     }
   }, []);
   
-  // Check authentication immediately
+  // For admin routes
+  if (adminRequired) {
+    const adminToken = localStorage.getItem('adminToken');
+    console.log("ProtectedRoute - checking admin token:", !!adminToken);
+    
+    if (!adminToken) {
+      console.log("ProtectedRoute - No admin token found, redirecting to admin login");
+      localStorage.setItem('auth_error', 'Please login as admin to access this page');
+      
+      // Force reload to admin login page to ensure clean state
+      window.location.href = '/admin/login';
+      return null;
+    }
+    
+    console.log("ProtectedRoute - Admin token found, rendering protected admin content");
+    return children;
+  }
+  
+  // For regular user routes
   const token = localStorage.getItem('accessToken');
   console.log("ProtectedRoute - checking auth token:", !!token);
   

@@ -76,7 +76,7 @@ const donateFood = asyncHandler(async(req, res) => {
         console.log('✅ Final user ID being used:', userId?.toString() || 'null (Anonymous)');
         
         // Prepare donation data
-        const data = {
+    const data = {
             user: userId, // Will be null if no valid user ID was found
             fullname, 
             email, 
@@ -124,7 +124,7 @@ const donateFood = asyncHandler(async(req, res) => {
 // Get all donations
 const getAllDonations = asyncHandler(async(req, res) => {
     const donations = await getAllDonationsService();
-    
+
     return res
     .status(200)
     .json(
