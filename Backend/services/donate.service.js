@@ -450,6 +450,48 @@ const getDonationStatistics = async () => {
     }
 };
 
+// Update donation quantity by the owner
+const updateDonationQuantity = async (donationId, foodQuantity, userId) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(donationId)) {
+            throw new Error("Invalid donation ID format");
+        }
+        
+        if (!foodQuantity || parseInt(foodQuantity) <= 0) {
+            throw new Error("Food quantity must be greater than 0");
+        }
+        
+        // Find the donation first to check ownership
+        const donation = await donateModel.findById(donationId);
+        
+        if (!donation) {
+            throw new Error("Donation not found");
+        }
+        
+        // Check if the user is the owner of the donation
+        if (donation.user && donation.user.toString() !== userId.toString()) {
+            throw new Error("You don't have permission to update this donation");
+        }
+        
+        // Check if donation status allows quantity update (only pending donations can be updated)
+        if (donation.status !== 'pending') {
+            throw new Error("Only pending donations can be updated");
+        }
+        
+        // Update the donation quantity
+        const updatedDonation = await donateModel.findByIdAndUpdate(
+            donationId,
+            { foodQuantity },
+            { new: true, runValidators: true }
+        );
+        
+        return updatedDonation;
+    } catch (error) {
+        console.error("Error updating donation quantity:", error);
+        throw error;
+    }
+};
+
 module.exports = {
     createDonation,
     getAllDonations,
@@ -460,5 +502,6 @@ module.exports = {
     getDonationsByDateRange,
     getDonationsByFoodType,
     addNotesToDonation,
-    getDonationStatistics
+    getDonationStatistics,
+    updateDonationQuantity
 };
