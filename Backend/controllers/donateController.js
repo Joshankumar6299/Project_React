@@ -12,7 +12,8 @@ const {
     getDonationsByDateRange: getDonationsByDateRangeService,
     getDonationsByFoodType: getDonationsByFoodTypeService,
     addNotesToDonation: addNotesToDonationService,
-    getDonationStatistics: getDonationStatisticsService
+    getDonationStatistics: getDonationStatisticsService,
+    updateDonationQuantity: updateDonationQuantityService
 } = require('../services/donate.service.js')
 
 const donateFood = asyncHandler(async(req, res) => {
@@ -483,6 +484,82 @@ const getDonationStatistics = asyncHandler(async(req, res) => {
     }
 });
 
+// Update donation quantity by the donor (non-admin user)
+const updateDonationQuantity = asyncHandler(async(req, res) => {
+    try {
+        const { donationId, foodQuantity } = req.body;
+        
+        // Validation
+        if (!donationId) {
+            return res.status(400).json(
+                new ApiResponse(400, "Donation ID is required", null)
+            );
+        }
+        
+        if (!foodQuantity) {
+            return res.status(400).json(
+                new ApiResponse(400, "Food quantity is required", null)
+            );
+        }
+        
+        if (parseInt(foodQuantity) <= 0) {
+            return res.status(400).json(
+                new ApiResponse(400, "Food quantity must be greater than 0", null)
+            );
+        }
+        
+        // Check if user is authenticated
+        if (!req.user) {
+            return res
+                .status(403)
+                .json(
+                    new ApiResponse(403, "Authentication required to update donation", null)
+                );
+        }
+        
+        const userId = req.user._id;
+        
+        // Update donation quantity using the service
+        const updatedDonation = await updateDonationQuantityService(donationId, foodQuantity, userId);
+        
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(200, "Donation quantity updated successfully", updatedDonation)
+            );
+    } catch (error) {
+        console.error("Error updating donation quantity:", error);
+        
+        if (error.message === "Donation not found") {
+            return res.status(404).json(
+                new ApiResponse(404, "Donation not found", null)
+            );
+        }
+        
+        if (error.message === "You don't have permission to update this donation") {
+            return res.status(403).json(
+                new ApiResponse(403, "You don't have permission to update this donation", null)
+            );
+        }
+        
+        if (error.message === "Only pending donations can be updated") {
+            return res.status(400).json(
+                new ApiResponse(400, "Only pending donations can be updated", null)
+            );
+        }
+        
+        if (error.name === 'CastError' || error.message === "Invalid donation ID format") {
+            return res.status(400).json(
+                new ApiResponse(400, "Invalid donation ID format", null)
+            );
+        }
+        
+        return res.status(500).json(
+            new ApiResponse(500, error.message || "Error updating donation quantity", null)
+        );
+    }
+});
+
 module.exports = {
     donateFood,
     getAllDonations,
@@ -493,5 +570,6 @@ module.exports = {
     getDonationsByDateRange, 
     getDonationsByFoodType,
     addNotesToDonation,
-    getDonationStatistics
+    getDonationStatistics,
+    updateDonationQuantity
 }
