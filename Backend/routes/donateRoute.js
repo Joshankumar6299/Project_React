@@ -10,7 +10,8 @@ const {
     getDonationsByDateRange,
     getDonationsByFoodType,
     addNotesToDonation,
-    getDonationStatistics
+    getDonationStatistics,
+    updateDonationQuantity
 } = require('../controllers/donateController.js');
 const auth = require('../middlewares/auth.middleware.js');
 
@@ -29,5 +30,8 @@ router.get('/date-range', auth, getDonationsByDateRange);
 router.get('/food-type/:foodType', auth, getDonationsByFoodType);
 router.post('/add-notes', auth, addNotesToDonation);
 router.get('/statistics', auth, getDonationStatistics);
+
+// Route for updating donation quantity
+router.patch('/update-quantity', auth, updateDonationQuantity);
 
 module.exports = router;
