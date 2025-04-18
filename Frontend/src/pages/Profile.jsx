@@ -14,6 +14,10 @@ const Profile = () => {
   const [isLoadingDonations, setIsLoadingDonations] = useState(false);
   const [selectedDonation, setSelectedDonation] = useState(null);
   const [showDonationModal, setShowDonationModal] = useState(false);
+  const [isEditingQuantity, setIsEditingQuantity] = useState(false);
+  const [newQuantity, setNewQuantity] = useState('');
+  const [quantityError, setQuantityError] = useState('');
+  const [isUpdatingQuantity, setIsUpdatingQuantity] = useState(false);
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -141,6 +145,113 @@ const Profile = () => {
   const closeDonationModal = () => {
     setShowDonationModal(false);
     setSelectedDonation(null);
+    setIsEditingQuantity(false);
+    setNewQuantity('');
+    setQuantityError('');
+  };
+
+  // Handle editing quantity
+  const startEditingQuantity = () => {
+    setNewQuantity(selectedDonation.foodQuantity);
+    setIsEditingQuantity(true);
+  };
+
+  const cancelEditingQuantity = () => {
+    setIsEditingQuantity(false);
+    setNewQuantity('');
+    setQuantityError('');
+  };
+
+  const handleQuantityChange = (e) => {
+    const value = e.target.value;
+    // Only allow positive numbers
+    const numberValue = value.replace(/[^0-9]/g, '');
+    
+    if (value !== numberValue) {
+      setQuantityError('Please enter numbers only');
+    } else if (parseInt(numberValue) <= 0 && numberValue !== '') {
+      setQuantityError('Quantity must be greater than 0');
+    } else {
+      setQuantityError('');
+    }
+    
+    setNewQuantity(numberValue);
+  };
+
+  const updateDonationQuantity = async () => {
+    // Validate quantity
+    if (!newQuantity || newQuantity.trim() === '') {
+      setQuantityError('Quantity is required');
+      return;
+    }
+    
+    if (parseInt(newQuantity) <= 0) {
+      setQuantityError('Quantity must be greater than 0');
+      return;
+    }
+    
+    setIsUpdatingQuantity(true);
+    
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        toast.error('Authentication required');
+        navigate('/login', { state: { from: '/dashboard' } });
+        return;
+      }
+      
+      const response = await axios.patch('/donate/update-quantity', 
+        { 
+          donationId: selectedDonation._id, 
+          foodQuantity: newQuantity 
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      console.log('Quantity update response:', response.data);
+      
+      if (response.data && response.data.success) {
+        // Update the selected donation
+        setSelectedDonation({
+          ...selectedDonation,
+          foodQuantity: newQuantity
+        });
+        
+        // Update the donation in the list
+        setUserDonations(prevDonations => 
+          prevDonations.map(donation => 
+            donation._id === selectedDonation._id 
+              ? {...donation, foodQuantity: newQuantity} 
+              : donation
+          )
+        );
+        
+        toast.success('Food quantity updated successfully!');
+        setIsEditingQuantity(false);
+      } else {
+        toast.error(response.data?.message || 'Failed to update food quantity');
+      }
+    } catch (error) {
+      console.error('Error updating donation quantity:', error);
+      
+      if (error.response?.status === 401) {
+        toast.error('Your login session has expired. Please log in again.');
+        localStorage.removeItem('accessToken');
+        setTimeout(() => navigate('/login', { state: { from: '/dashboard' } }), 2000);
+      } else if (error.response?.status === 403) {
+        toast.error('You do not have permission to update this donation');
+      } else if (error.response?.status === 400) {
+        toast.error(error.response.data?.message || 'Invalid input. Please check your data.');
+      } else {
+        toast.error('Failed to update donation. Please try again later.');
+      }
+    } finally {
+      setIsUpdatingQuantity(false);
+    }
   };
 
   const handleChange = (e) => {
@@ -810,12 +921,60 @@ const Profile = () => {
                   
                   <div className="mb-4">
                     <h4 className="text-sm font-medium text-gray-500">Quantity</h4>
-                    <p className="mt-1 text-sm text-gray-900">{selectedDonation.foodQuantity}</p>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-500">Donor Name</h4>
-                    <p className="mt-1 text-sm text-gray-900">{selectedDonation.fullname || formData.fullName}</p>
+                    {isEditingQuantity ? (
+                      <div className="mt-1">
+                        <div className="flex items-center">
+                          <input
+                            type="text"
+                            value={newQuantity}
+                            onChange={handleQuantityChange}
+                            className={`block w-full px-3 py-2 border ${
+                              quantityError ? 'border-red-300' : 'border-gray-300'
+                            } rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                            placeholder="Enter quantity"
+                          />
+                        </div>
+                        {quantityError && (
+                          <p className="mt-1 text-sm text-red-600">{quantityError}</p>
+                        )}
+                        <div className="mt-2 flex space-x-2">
+                          <button
+                            type="button"
+                            disabled={isUpdatingQuantity}
+                            className={`inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                              isUpdatingQuantity ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                            onClick={updateDonationQuantity}
+                          >
+                            {isUpdatingQuantity ? 'Updating...' : 'Save'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={isUpdatingQuantity}
+                            className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            onClick={cancelEditingQuantity}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center mt-1">
+                        <p className="text-sm text-gray-900 mr-3">{selectedDonation.foodQuantity}</p>
+                        {selectedDonation.status === 'pending' && (
+                          <button
+                            type="button"
+                            className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800"
+                            onClick={startEditingQuantity}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
